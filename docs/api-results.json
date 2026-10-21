@@ -1,0 +1,13 @@
+{
+  "transport": "HTTP Supabase interceptado em teste; handlers, cliente e SQL reais executados",
+  "passed": [
+    "API sem credenciais: conexão pendente e validação do arquivo disponível",
+    "API conectada ao transporte de testes consulta SQL",
+    "Prévia e confirmação usam o mesmo arquivo; importação real no motor isolado",
+    "Apontamento HTTP, edição e idempotência chegam ao SQL",
+    "Backend rejeita saldo excedido, versão antiga e entrada inválida",
+    "Origem estrangeira, arquivo alterado e corpo muito grande bloqueados",
+    "Serialização ao navegador não contém chave administrativa"
+  ],
+  "remoteSupabaseTested": false
+}

@@ -1,0 +1,101 @@
+{
+  "engine": "PGlite (PostgreSQL embutido, sessão única)",
+  "results": [
+    {
+      "test": "Migração preserva 20 unidades históricas existentes",
+      "status": "PASS"
+    },
+    {
+      "test": "01 Apontamento parcial 20 + 15 = 35",
+      "status": "PASS"
+    },
+    {
+      "test": "02 Limite: 20 + 10 em programação de 25 bloqueado",
+      "status": "PASS"
+    },
+    {
+      "test": "03 Data anterior preservada e timestamp real",
+      "status": "PASS"
+    },
+    {
+      "test": "04 Segundo dia recebe lançamento sem mover ao primeiro",
+      "status": "PASS"
+    },
+    {
+      "test": "05 FIFO independente nos quatro subsetores",
+      "status": "PASS"
+    },
+    {
+      "test": "06 Redução 60→40 preserva histórico de 50",
+      "status": "PASS"
+    },
+    {
+      "test": "15 Aumento posterior restaura excedente válido sem duplicar",
+      "status": "PASS"
+    },
+    {
+      "test": "14 Redução, correção e aumento sem excedente indevido",
+      "status": "PASS"
+    },
+    {
+      "test": "07 OP ausente exclui histórico em cascata",
+      "status": "PASS"
+    },
+    {
+      "test": "08 Alteração de datas preserva produção",
+      "status": "PASS"
+    },
+    {
+      "test": "09 Correção 20→15 e limite zero",
+      "status": "PASS"
+    },
+    {
+      "test": "10 Situação atrasada com apenas TAMPA pendente",
+      "status": "PASS"
+    },
+    {
+      "test": "11 Programação parcial 60/90 aceita",
+      "status": "PASS"
+    },
+    {
+      "test": "12 Erro durante inserção reverte exclusão e dados anteriores",
+      "status": "PASS"
+    },
+    {
+      "test": "13a Chamadas concorrentes no motor serializado rejeitam versão obsoleta",
+      "status": "PASS"
+    },
+    {
+      "test": "13b Retry com a mesma chave não duplica apontamento",
+      "status": "PASS"
+    },
+    {
+      "test": "Importação rejeita prévia obsoleta e reaplica retry uma vez",
+      "status": "PASS"
+    },
+    {
+      "test": "Séries inclusivas, lacunas e filtros combinados",
+      "status": "PASS"
+    },
+    {
+      "test": "Validação SQL rejeita duplicidade e mantém estado",
+      "status": "PASS"
+    },
+    {
+      "test": "Segurança: anon sem leitura ou execução; service_role autorizado",
+      "status": "PASS"
+    },
+    {
+      "test": "Rate limit compartilhado no banco",
+      "status": "PASS"
+    },
+    {
+      "test": "Excel real: 115 linhas, 84 OPs, 2663 unidades no SQL",
+      "status": "PASS"
+    }
+  ],
+  "limitations": [
+    "Concorrência entre sessões PostgreSQL independentes não executada neste ambiente.",
+    "Supabase remoto e PostgREST reais não conectados."
+  ]
+}
