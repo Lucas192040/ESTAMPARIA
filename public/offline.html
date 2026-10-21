@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#090d12" />
+    <title>Sem conexão | Estamparia</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center;
+        background: #090d12; color: #f3f6fa; font: 16px Arial, sans-serif; padding: 28px; text-align: center; }
+      main { max-width: 380px; }
+      img { width: 96px; height: 96px; border-radius: 20px; }
+      p { line-height: 1.5; color: #aebbc9; }
+      button { padding: 12px 24px; margin-top: 16px; background: #2687ff; border: 0;
+        color: #fff; border-radius: 8px; font: inherit; font-weight: bold; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="Estamparia" />
+      <h1>Sem conexão com a internet</h1>
+      <p>Para consultar programações e registrar apontamentos, conecte-se à internet e tente novamente.</p>
+      <button onclick="location.reload()">Tentar novamente</button>
+    </main>
+  </body>
+</html>
