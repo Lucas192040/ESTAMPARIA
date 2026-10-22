@@ -14,17 +14,19 @@ export class ApiError extends Error {
 export function configured() {
   return !!(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
+let serverClient: ReturnType<typeof createClient> | undefined;
 export function db() {
   if (!configured())
     throw new ApiError(
       "Conexão ainda não configurada. Configure o Supabase no servidor.",
       503,
     );
-  return createClient(
+  serverClient ??= createClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
+  return serverClient;
 }
 export async function rpc<T>(
   name: string,

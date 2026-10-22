@@ -251,3 +251,8 @@ vercel.json              Configuração de deploy
 - [Vercel: limites de Functions](https://vercel.com/docs/functions/limitations)
 
 O pacote SheetJS vem da distribuição oficial 0.20.3, com integridade registrada no lockfile; não utiliza o pacote npm antigo 0.18.5.
+
+## Auditoria de desempenho (22/10/2026)
+
+Consulte [`docs/auditoria-desempenho-2026-10-22.md`](docs/auditoria-desempenho-2026-10-22.md) para diagnóstico do HTTP 503 / PGRST002 / PGRST003, limites das conclusões, melhorias de cache/single-flight/backoff, testes executados, migração opcional da função de limite e roteiro de deploy. **Não é necessário criar outro banco para instalar esta versão.**
+

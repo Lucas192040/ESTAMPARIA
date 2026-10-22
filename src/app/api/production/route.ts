@@ -1,4 +1,5 @@
 import { answer, failure, guard, limitedBody, rpc } from "@/lib/server";
+import { invalidateDailyListing } from "@/lib/daily-server";
 import { productionSchema } from "@/lib/validation";
 export const runtime = "nodejs";
 export async function POST(req: Request) {
@@ -7,8 +8,7 @@ export async function POST(req: Request) {
     const p = productionSchema.parse(
       JSON.parse((await limitedBody(req, 8192)).toString("utf8")),
     );
-    return answer(
-      await rpc("est_registrar", {
+    const result = await rpc("est_registrar", {
         p_request: p.requestId,
         p_programacao: p.programacao,
         p_subsetor: p.subsetor,
@@ -16,8 +16,9 @@ export async function POST(req: Request) {
         p_modo: p.modo,
         p_versao: p.versao,
         p_observacao: p.observacao,
-      }),
-    );
+      });
+    invalidateDailyListing();
+    return answer(result);
   } catch (e) {
     return failure(e);
   }

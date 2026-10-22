@@ -9,6 +9,7 @@ import {
   ApiError,
 } from "@/lib/server";
 import { parseExcel, MAX_FILE_SIZE } from "@/lib/importer";
+import { invalidateDailyListing } from "@/lib/daily-server";
 import type { ImportPreview } from "@/lib/types";
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -45,14 +46,14 @@ export async function POST(req: Request) {
     const requestId = z.uuid().parse(form.get("requestId"));
     if (form.get("hash") !== parsed.preview.hash)
       throw new ApiError("O arquivo mudou. Gere uma nova prévia.", 409);
-    return answer(
-      await rpc("est_importar", {
+    const result = await rpc("est_importar", {
         p_rows: parsed.rows,
         p_nome: file.name.slice(0, 255),
         p_revision: revision,
         p_request: requestId,
-      }),
-    );
+      });
+    invalidateDailyListing();
+    return answer(result);
   } catch (e) {
     return failure(e);
   }

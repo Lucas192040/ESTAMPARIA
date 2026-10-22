@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Factory,
   Search,
@@ -49,10 +49,19 @@ export default function Dashboard() {
     mode: "adicionar" | "corrigir";
     schedule?: number;
   } | null>(null);
+  const failureCount = useRef(0);
+  const lastRequestAt = useRef(0);
+  const forceNext = useRef(false);
   const reload = useCallback(() => setRefresh((v) => v + 1), []);
   useEffect(() => {
+    // Consultas normais a cada minuto. Após erro, aumentar progressivamente
+    // para 2, 4, 8 e 16 minutos; nunca consultar em abas ocultas/offline.
     const timer = setInterval(() => {
-      if (document.visibilityState === "visible") reload();
+      if (document.visibilityState !== "visible" || !navigator.onLine) return;
+      const backoffMs = failureCount.current
+        ? 60000 * 2 ** Math.min(failureCount.current, 4)
+        : 60000;
+      if (Date.now() - lastRequestAt.current >= backoffMs) reload();
     }, 60000);
     return () => clearInterval(timer);
   }, [reload]);
@@ -64,20 +73,32 @@ export default function Dashboard() {
   useEffect(() => {
     const ac = new AbortController();
     const t = setTimeout(async () => {
+      lastRequestAt.current = Date.now();
       setLoading(true);
       setError("");
       try {
         const params = new URLSearchParams(
           Object.entries(filters).map(([k, v]) => [k, String(v)]),
         );
+        // Depois de uma gravação, consultar dados atuais independentemente do
+        // cache curto mantido nas instâncias serverless.
+        if (forceNext.current) {
+          params.set("fresh", "1");
+          forceNext.current = false;
+        }
         const result = await fetchJson<Listing & { connected: boolean }>(
           `/api/ops?${params}`,
           { signal: ac.signal },
         );
+        failureCount.current = 0;
         setConnected(result.connected);
         setData(result.connected ? result : null);
       } catch (e) {
-        if (!ac.signal.aborted) setError((e as Error).message);
+        if (!ac.signal.aborted) {
+          failureCount.current++;
+          setConnected(false);
+          setError((e as Error).message);
+        }
       } finally {
         if (!ac.signal.aborted) setLoading(false);
       }
@@ -94,6 +115,8 @@ export default function Dashboard() {
   ).length;
   function success(message: string) {
     setNotice(message);
+    forceNext.current = true;
+    failureCount.current = 0;
     reload();
   }
   return (
