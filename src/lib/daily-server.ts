@@ -1,6 +1,7 @@
 import "server-only";
 import { db, ApiError } from "./server";
 import { createRequestCache } from "./request-cache";
+import { withDbDeadline } from "./db-timeout";
 import { dailyListing, type StoredAllocation, type StoredOrder, type StoredSchedule } from "./daily-listing";
 import { manausDate } from "./domain";
 import { type Filters, type Listing } from "./types";
@@ -14,8 +15,8 @@ type Snapshot = {
   lastImport: Listing["ultima_importacao"];
 };
 
-// Um carregamento usa no máximo 18 segundos; todas as consultas compartilham
-// o mesmo deadline para não ocupar múltiplas conexões durante falhas da API.
+// Todas as chamadas HTTP desta leitura compartilham uma janela de 18 segundos.
+// Retentativas internas do SDK podem prolongar o tratamento do erro.
 const DB_READ_TIMEOUT_MS = 18_000;
 const DATA_TTL_MS = 30_000;
 const FAILURE_COOLDOWN_MS = 15_000;
@@ -24,7 +25,6 @@ const MAX_ROWS = 100_000;
 
 async function allRows(
   client: Client,
-  signal: AbortSignal,
   table: "est_ops" | "est_programacoes" | "est_alocacoes",
   columns: string,
   sortKeys: string[],
@@ -33,7 +33,7 @@ async function allRows(
   for (let start = 0; ; start += STEP) {
     let query = client.from(table).select(columns);
     for (const column of sortKeys) query = query.order(column, { ascending: true });
-    const { data, error } = await query.range(start, start + STEP - 1).abortSignal(signal);
+    const { data, error } = await query.range(start, start + STEP - 1);
     if (error) {
       console.error("Falha ao consultar programação diária", { table, code: error.code });
       throw new ApiError("Não foi possível consultar as programações diárias.", 503);
@@ -46,9 +46,9 @@ async function allRows(
   return result;
 }
 
-async function currentRevision(client: Client, signal: AbortSignal) {
+async function currentRevision(client: Client) {
   const { data, error } = await client.from("est_estado")
-    .select("revisao").eq("id", true).single().abortSignal(signal);
+    .select("revisao").eq("id", true).single();
   if (error || !data) {
     console.error("Falha ao consultar revisão da programação", { code: error?.code });
     throw new ApiError("Não foi possível carregar a revisão da programação.", 503);
@@ -57,34 +57,37 @@ async function currentRevision(client: Client, signal: AbortSignal) {
 }
 
 async function loadSnapshot(): Promise<Snapshot> {
-  const client = db();
-  const signal = AbortSignal.timeout(DB_READ_TIMEOUT_MS);
-  // A importação substitui a programação numa transação: comparar revisões
-  // impede misturar tabelas que pertençam a versões distintas.
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const before = await currentRevision(client, signal);
-    // Executar sequencialmente: no plano Free evita solicitar quatro conexões
-    // PostgREST simultâneas por instância. O cache compensa a latência.
-    const orders = await allRows(client, signal, "est_ops", "id,op_pai,referencia_prod,potencia_pa,linha_prod,nome_cliente,qtd_op_pai", ["id"]);
-    const schedules = await allRows(client, signal, "est_programacoes", "id,op_id,data_programada,qtd_programada,serie_inicial,serie_final", ["id"]);
-    const allocations = await allRows(client, signal, "est_alocacoes", "programacao_id,subsetor_id,quantidade,versao", ["programacao_id", "subsetor_id"]);
-    const last = await client.from("est_importacoes").select("nome_arquivo,realizado_em")
-      .order("id", { ascending: false }).limit(1).maybeSingle().abortSignal(signal);
-    if (last.error) {
-      console.error("Falha ao consultar última importação", { code: last.error.code });
-      throw new ApiError("Não foi possível carregar os dados da importação.", 503);
+  // A mesma janela de timeout acompanha as leituras paginadas e revisões.
+  // O fetch do Supabase recebe o sinal via AsyncLocalStorage.
+  return withDbDeadline(DB_READ_TIMEOUT_MS, async () => {
+    const client = db();
+    // A importação substitui a programação numa transação: comparar revisões
+    // impede misturar tabelas que pertençam a versões distintas.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const before = await currentRevision(client);
+      // Executar sequencialmente: no plano Free evita pedir várias conexões
+      // PostgREST ao mesmo tempo pela mesma instância de API.
+      const orders = await allRows(client, "est_ops", "id,op_pai,referencia_prod,potencia_pa,linha_prod,nome_cliente,qtd_op_pai", ["id"]);
+      const schedules = await allRows(client, "est_programacoes", "id,op_id,data_programada,qtd_programada,serie_inicial,serie_final", ["id"]);
+      const allocations = await allRows(client, "est_alocacoes", "programacao_id,subsetor_id,quantidade,versao", ["programacao_id", "subsetor_id"]);
+      const last = await client.from("est_importacoes").select("nome_arquivo,realizado_em")
+        .order("id", { ascending: false }).limit(1).maybeSingle();
+      if (last.error) {
+        console.error("Falha ao consultar última importação", { code: last.error.code });
+        throw new ApiError("Não foi possível carregar os dados da importação.", 503);
+      }
+      const after = await currentRevision(client);
+      if (before !== after) continue;
+      return {
+        orders: orders as unknown as StoredOrder[],
+        schedules: schedules as unknown as StoredSchedule[],
+        allocations: allocations as unknown as StoredAllocation[],
+        revision: after,
+        lastImport: (last.data as Listing["ultima_importacao"]) ?? null,
+      };
     }
-    const after = await currentRevision(client, signal);
-    if (before !== after) continue;
-    return {
-      orders: orders as unknown as StoredOrder[],
-      schedules: schedules as unknown as StoredSchedule[],
-      allocations: allocations as unknown as StoredAllocation[],
-      revision: after,
-      lastImport: last.data || null,
-    };
-  }
-  throw new ApiError("A programação foi atualizada durante a consulta. Atualize a tela e tente novamente.", 409);
+    throw new ApiError("A programação foi atualizada durante a consulta. Atualize a tela e tente novamente.", 409);
+  });
 }
 
 // Cache compartilhado apenas entre requisições da mesma instância. Todos os

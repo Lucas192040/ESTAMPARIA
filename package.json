@@ -16,7 +16,8 @@
     "verify:connection": "node --env-file=.env.local --import tsx scripts/verify-connection.ts",
     "format": "prettier --write src scripts tests *.json *.ts *.mjs README.md docs/*.md",
     "test:migration": "node scripts/check-migrations.mjs",
-    "test:sql": "node --test tests/sql-safeupdate.test.mjs"
+    "test:sql": "node --test tests/sql-safeupdate.test.mjs",
+    "test:timeout": "node --experimental-strip-types --test tests/db-timeout.node.test.mjs"
   },
   "keywords": [],
   "author": "",

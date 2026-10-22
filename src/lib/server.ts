@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { createHmac } from "node:crypto";
+import { supabaseFetch } from "./db-timeout";
 import { isLocalDevelopmentOrigin } from "./local-network";
 import { ZodError } from "zod";
 export class ApiError extends Error {
@@ -24,7 +25,10 @@ export function db() {
   serverClient ??= createClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
+    {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { fetch: supabaseFetch },
+    },
   );
   return serverClient;
 }
@@ -32,9 +36,17 @@ export async function rpc<T>(
   name: string,
   args: Record<string, unknown> = {},
 ): Promise<T> {
-  const { data, error } = await db()
-    .rpc(name, args)
-    .abortSignal(AbortSignal.timeout(45000));
+  // This project calls database functions dynamically and has no generated
+  // Supabase Database schema. The SDK otherwise infers RPC Args as `undefined`.
+  // Cast only the RPC boundary, keeping caller arguments and response checked.
+  type RpcResult = {
+    data: unknown;
+    error: { code: string; message: string; details: string | null; hint: string | null } | null;
+  };
+  const client = db() as unknown as {
+    rpc: (functionName: string, functionArgs: Record<string, unknown>) => PromiseLike<RpcResult>;
+  };
+  const { data, error } = await client.rpc(name, args);
   if (error) {
     if (["22023", "40001", "P0002"].includes(error.code))
       throw new ApiError(error.message, error.code === "22023" ? 422 : 409);
