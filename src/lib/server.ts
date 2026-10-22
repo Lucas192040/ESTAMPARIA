@@ -56,7 +56,30 @@ export async function rpc<T>(
   }
   return data as T;
 }
+// Limite local para consultas de leitura. A listagem nunca depende de uma
+// escrita no banco apenas para autorizar um GET: est_limitar pode bloquear a
+// tabela est_limites e deixar todo o painel indisponível por 45 segundos.
+// A proteção distribuída por est_limitar permanece obrigatória para escritas
+// e importações. Em serverless o limite local é por instância, não global;
+// manter a aplicação atrás de controle de acesso na hospedagem.
 const limits = new Map<string, { start: number; count: number }>();
+function localLimit(key: string, max: number) {
+  const now = Date.now();
+  const previous = limits.get(key);
+  if (!previous || now - previous.start >= 60_000) {
+    // Evita crescimento indefinido em instâncias que continuam aquecidas.
+    if (limits.size >= 5000) {
+      for (const [oldKey, value] of limits) {
+        if (now - value.start >= 60_000) limits.delete(oldKey);
+      }
+    }
+    if (limits.size >= 5000 && !limits.has(key))
+      throw new ApiError("Muitas requisições. Aguarde um minuto.", 429);
+    limits.set(key, { start: now, count: 1 });
+  } else if (++previous.count > max) {
+    throw new ApiError("Muitas requisições. Aguarde um minuto.", 429);
+  }
+}
 export async function guard(
   request: Request,
   kind: "read" | "write" | "import",
@@ -96,20 +119,19 @@ export async function guard(
     ? request.headers.get("x-vercel-forwarded-for")?.split(",")[0] || "shared"
     : "shared";
   const max = kind === "read" ? 180 : kind === "import" ? 8 : 60;
-  if (configured()) {
-    const key = createHmac("sha256", process.env.SUPABASE_SERVICE_ROLE_KEY!)
-      .update(`${ip}:${kind}`)
-      .digest("hex");
-    if (!(await rpc<boolean>("est_limitar", { p_chave: key, p_max: max })))
-      throw new ApiError("Muitas requisições. Aguarde um minuto.", 429);
-  } else {
-    const now = Date.now(),
-      entry = limits.get(kind);
-    if (!entry || now - entry.start > 60000)
-      limits.set(kind, { start: now, count: 1 });
-    else if (++entry.count > max)
-      throw new ApiError("Muitas requisições. Aguarde um minuto.", 429);
+  const key = configured()
+    ? createHmac("sha256", process.env.SUPABASE_SERVICE_ROLE_KEY!)
+        .update(`${ip}:${kind}`)
+        .digest("hex")
+    : `${ip}:${kind}`;
+  if (kind === "read" || !configured()) {
+    // GET continua limitado sem depender do RPC est_limitar.
+    // POST mantém o limite centralizado no banco, inclusive em produção.
+    localLimit(key, max);
+    return;
   }
+  if (!(await rpc<boolean>("est_limitar", { p_chave: key, p_max: max })))
+    throw new ApiError("Muitas requisições. Aguarde um minuto.", 429);
 }
 export async function limitedBody(request: Request, max: number) {
   const declared = Number(request.headers.get("content-length") || 0);

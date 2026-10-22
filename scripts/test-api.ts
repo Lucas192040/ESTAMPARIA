@@ -19,6 +19,7 @@ for (const name of readdirSync("supabase/migrations").filter((f) => f.endsWith("
 const originalFetch = globalThis.fetch,
   origin = "http://localhost:3000",
   results: string[] = [];
+let limiterCalls = 0;
 const names: Record<string, string[]> = {
   est_listar: ["p_filters"],
   est_limitar: ["p_chave", "p_max"],
@@ -44,6 +45,7 @@ globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   assert.ok(url.startsWith("https://isolated-test.supabase.co/rest/v1/rpc/"));
   const name = url.split("/").at(-1)!;
   assert.ok(names[name]);
+  if (name === "est_limitar") limiterCalls++;
   const payload = JSON.parse(String(init?.body));
   const values = names[name].map((key) => {
     const v = payload[key];
@@ -143,6 +145,7 @@ try {
       true,
     );
     assert.equal((await (await ops(get("/api/ops"))).json()).total, 0);
+    assert.equal(limiterCalls, 0, "GET não deve depender do RPC est_limitar");
   });
   let prev: any;
   await test("Prévia e confirmação usam o mesmo arquivo; importação real no motor isolado", async () => {
@@ -175,6 +178,7 @@ try {
     let r = await production(body("/api/production", payload));
     assert.equal(r.status, 200);
     assert.equal((await r.json()).quantidade, 1);
+    assert.ok(limiterCalls > 0, "POST deve manter o limite distribuído no banco");
     r = await production(body("/api/production", payload));
     assert.equal(r.status, 200);
     assert.equal((await r.json()).quantidade, 1);

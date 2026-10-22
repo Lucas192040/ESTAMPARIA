@@ -1,3 +1,36 @@
+## Correção do erro 503 em `/api/ops` (22/10/2026)
+
+**Sintoma observado:** a Vercel registra `Database operation failed`,
+`operation: est_limitar` e `TimeoutError` após 45 segundos. Antes de consultar
+as OPs, o middleware tentava gravar no banco para contabilizar cada GET.
+Se o contador SQL estava lento/bloqueado, a listagem inteira falhava.
+
+**Alteração aplicada:** requisições GET agora usam um contador por instância
+em memória, sem executar `est_limitar`. POSTs de produção e importação **continuam**
+utilizando `est_limitar` no Supabase para o limite centralizado. Mantiveram-se
+intactos os filtros, cálculo de programações, apontamentos, regras FIFO,
+importação, tabelas, migrações e PWA. Não é necessário executar SQL para
+aplicar esta correção.
+
+**Publicação:** atualizar o código do projeto na Vercel, executar novo deploy
+e acessar a página novamente. Se persistir HTTP 503, olhar o **novo** log: se
+o erro agora for na consulta das tabelas (`est_estado`, `est_ops`,
+`est_programacoes`, `est_alocacoes`), há outro problema de conexão/desempenho
+no Supabase que o ZIP não pode consertar por si só.
+
+**Atenção:** a limitação de GET em memória vale **por instância**, portanto
+não é um rate limit distribuído contra ataques. É imprescindível manter o
+aplicativo e **todas as rotas `/api/*`** protegidos pelo controle de acesso
+corporativo/proteção de deployment. Não confundir
+`ACCESS_RESTRICTION_CONFIRMED=true` com um mecanismo real de autenticação.
+O modo local para GET é uma medida de disponibilidade, não substitui proteção
+no proxy ou um rate limiter distribuído não dependente desse RPC.
+
+Para verificar o estado do banco sem alterar nada, execute as consultas em
+`docs/diagnostico-timeout.sql` pelo SQL Editor do projeto correto no Supabase.
+
+---
+
 ## Visualização por programação diária (atualização)
 
 A tela principal mostra uma **tabela** por padrão; use o alternador para mostrar **cards**.
