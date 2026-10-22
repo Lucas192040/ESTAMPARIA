@@ -17,7 +17,8 @@
     "format": "prettier --write src scripts tests *.json *.ts *.mjs README.md docs/*.md",
     "test:migration": "node scripts/check-migrations.mjs",
     "test:sql": "node --test tests/sql-safeupdate.test.mjs",
-    "test:timeout": "node --experimental-strip-types --test tests/db-timeout.node.test.mjs"
+    "test:timeout": "node --experimental-strip-types --test tests/db-timeout.node.test.mjs",
+    "test:revision": "node --experimental-strip-types --test tests/revision-row.test.mjs"
   },
   "keywords": [],
   "author": "",

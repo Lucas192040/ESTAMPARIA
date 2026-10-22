@@ -2,6 +2,7 @@ import "server-only";
 import { db, ApiError } from "./server";
 import { createRequestCache } from "./request-cache";
 import { withDbDeadline } from "./db-timeout";
+import { parseRevisionRow } from "./revision-row";
 import { dailyListing, type StoredAllocation, type StoredOrder, type StoredSchedule } from "./daily-listing";
 import { manausDate } from "./domain";
 import { type Filters, type Listing } from "./types";
@@ -49,11 +50,14 @@ async function allRows(
 async function currentRevision(client: Client) {
   const { data, error } = await client.from("est_estado")
     .select("revisao").eq("id", true).single();
-  if (error || !data) {
+  // O SDK sem tipos de schema pode inferir `data` como `never`.
+  // Validar o payload (unknown) evita casts frágeis e impede revisão inválida.
+  const revision = parseRevisionRow(data);
+  if (error || revision === null) {
     console.error("Falha ao consultar revisão da programação", { code: error?.code });
     throw new ApiError("Não foi possível carregar a revisão da programação.", 503);
   }
-  return Number(data.revisao);
+  return revision;
 }
 
 async function loadSnapshot(): Promise<Snapshot> {

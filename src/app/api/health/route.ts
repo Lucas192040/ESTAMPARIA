@@ -1,6 +1,7 @@
 import { answer, configured, db, guard, failure, ApiError } from "@/lib/server";
 import { createRequestCache } from "@/lib/request-cache";
 import { withDbDeadline } from "@/lib/db-timeout";
+import { parseRevisionRow } from "@/lib/revision-row";
 export const runtime = "nodejs";
 
 // O antigo health check chamava est_previa_importacao e varria todas as OPs.
@@ -8,7 +9,7 @@ export const runtime = "nodejs";
 const health = createRequestCache(() => withDbDeadline(8_000, async () => {
   const { data, error } = await db().from("est_estado")
     .select("revisao").eq("id", true).limit(1).maybeSingle();
-  if (error || !data) {
+  if (error || parseRevisionRow(data) === null) {
     console.error("Falha na verificação de conexão", { code: error?.code });
     throw new ApiError("Banco temporariamente indisponível.", 503);
   }
