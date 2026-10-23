@@ -49,21 +49,20 @@ export default function Dashboard() {
     mode: "adicionar" | "corrigir";
     schedule?: number;
   } | null>(null);
-  const failureCount = useRef(0);
-  const lastRequestAt = useRef(0);
   const forceNext = useRef(false);
+  const lastSuccessfulRefresh = useRef(0);
   const reload = useCallback(() => setRefresh((v) => v + 1), []);
+  // No polling. On returning to a tab, refresh at most once every two minutes.
   useEffect(() => {
-    // Consultas normais a cada minuto. Após erro, aumentar progressivamente
-    // para 2, 4, 8 e 16 minutos; nunca consultar em abas ocultas/offline.
-    const timer = setInterval(() => {
-      if (document.visibilityState !== "visible" || !navigator.onLine) return;
-      const backoffMs = failureCount.current
-        ? 60000 * 2 ** Math.min(failureCount.current, 4)
-        : 60000;
-      if (Date.now() - lastRequestAt.current >= backoffMs) reload();
-    }, 60000);
-    return () => clearInterval(timer);
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && navigator.onLine &&
+          Date.now() - lastSuccessfulRefresh.current > 120_000) {
+        forceNext.current = true;
+        reload();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [reload]);
   useEffect(() => {
     if (!notice) return;
@@ -73,7 +72,6 @@ export default function Dashboard() {
   useEffect(() => {
     const ac = new AbortController();
     const t = setTimeout(async () => {
-      lastRequestAt.current = Date.now();
       setLoading(true);
       setError("");
       try {
@@ -84,25 +82,24 @@ export default function Dashboard() {
         // cache curto mantido nas instâncias serverless.
         if (forceNext.current) {
           params.set("fresh", "1");
-          forceNext.current = false;
         }
         const result = await fetchJson<Listing & { connected: boolean }>(
           `/api/ops?${params}`,
           { signal: ac.signal },
         );
-        failureCount.current = 0;
+        forceNext.current = false;
+        lastSuccessfulRefresh.current = Date.now();
         setConnected(result.connected);
         setData(result.connected ? result : null);
       } catch (e) {
         if (!ac.signal.aborted) {
-          failureCount.current++;
           setConnected(false);
           setError((e as Error).message);
         }
       } finally {
         if (!ac.signal.aborted) setLoading(false);
       }
-    }, 250);
+    }, 400);
     return () => {
       clearTimeout(t);
       ac.abort();
@@ -116,7 +113,6 @@ export default function Dashboard() {
   function success(message: string) {
     setNotice(message);
     forceNext.current = true;
-    failureCount.current = 0;
     reload();
   }
   return (
