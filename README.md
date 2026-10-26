@@ -4,8 +4,10 @@
 
 - Recebe planilhas `.xls`/`.xlsx` com OP, quantidade, séries e **data programada**.
 - Mostra cada **OP + dia** separadamente; faixas no mesmo dia mantêm IDs próprios.
-- Aponta e corrige separadamente **CORPO, FUNDO, TAMPA, TAMPA BORDEADA**.
+- Permite **apontar vários subsetores simultaneamente**, com quantidades independentes para **CORPO, FUNDO, TAMPA, TAMPA BORDEADA**; a correção individual continua disponível.
 - Mantém o saldo por subprocesso, histórico, revisão concorrente e prévia antes de substituir a programação.
+- O apontamento múltiplo usa uma transação PostgreSQL: se um subsetor falhar, todos os registros do envio são revertidos. Usa a função atual `est_registrar`, sem migração de banco.
+- Cabeçalho utiliza `public/logo-itam.png`, cópia fiel do logotipo ITAM recebido.
 - PWA, tabela/cards, busca, filtros e indicadores continuam disponíveis.
 
 ## O que foi simplificado
@@ -40,7 +42,10 @@ A restauração do arquivo `estamparia_backup.dump` pode exigir adaptações pon
 - Backup restaurado sem erros e contagens de linhas conferidas nas 10 tabelas.
 - OPs com mais de um dia mantêm quantidades independentes por programação.
 - OP com duas faixas no mesmo dia mostra um agrupamento e aponta no ID correto.
-- Os quatro subprocessos registram valores distintos e respeitam o limite `qtd_programada`.
+- Os quatro subprocessos registram valores distintos, inclusive em um único envio, e respeitam o limite `qtd_programada` em cada subsetor.
+- Deixar campos vazios/zero: esses subsetores não devem ser incluídos. Um envio com todos vazios não é permitido.
+- Testar rollback: se um subsetor ultrapassar o saldo ou tiver versão desatualizada, nenhuma quantidade do lote deve ser registrada.
+- Reenvio do mesmo lote não deve duplicar peças (IDs derivados por subsetor).
 - Correção altera somente o subprocesso/faixa escolhidos, mantendo histórico e versão.
 - Reenvio da mesma requisição não duplica apontamento ou importação.
 - Prévia importa dados válidos e rejeita linhas duplicadas, séries sobrepostas e dados inválidos.
@@ -49,3 +54,23 @@ A restauração do arquivo `estamparia_backup.dump` pode exigir adaptações pon
 - Verificar CPU, conexões, leituras e tempo das consultas no Neon com uso real por vários dias.
 
 **Não há testes de integração com Neon ainda**, pois a base de destino e a connection string não foram fornecidas. Não interpretar o build local como validação de integração.
+
+## Atualização: apontamento múltiplo e logotipo (26/10/2026)
+
+- Para **adicionar produção**, selecione a programação/faixa e digite a quantidade independente de cada subsetor. Não é necessário selecionar um de cada vez.
+- Cada quantidade deve ser um inteiro positivo dentro do respectivo saldo. Campos com zero ou vazios são ignorados.
+- Ao confirmar, o backend valida formato, unicidade dos subsetores e versões enviadas, e executa a função de registro já existente de forma sequencial na **mesma conexão e transação**.
+- A validação de saldo e concorrência permanece a cargo de `public.est_registrar`. Erro em qualquer subsetor causa `ROLLBACK` do conjunto. A repetição de uma mesma tentativa usa UUIDs derivados do UUID de lote para evitar registros duplicados.
+- Para **corrigir produção**, a tela e API de correção individual continuam operando como antes.
+- O logotipo aparece no cabeçalho desktop/mobile; os ícones PWA não foram alterados.
+
+**Verificação:** `node --experimental-strip-types --test tests/production-batch.test.ts` testa a orquestração da transação sem conexão real. Ainda é obrigatório fazer teste de integração com a base Neon de homologação antes da publicação.
+
+## Otimização de navegação e uso do Neon (26/10/2026)
+
+- A interface solicita `GET /api/ops?dataset=1` **uma vez ao abrir** e depois de atualizações explícitas ou da visibilidade da aba conforme política anterior. A projeção diária é construída a partir da mesma consulta SQL e do mesmo cache de 120 segundos já existentes.
+- Pesquisa, cliente, período, OP, série, potência, linha, situação, ordenação e paginação rodam **localmente no navegador** (`filterDailyDataset`), mantendo as mesmas regras da consulta `/api/ops` antiga. Essas interações não acionam novas chamadas à API nem ao Neon.
+- `GET /api/ops` sem `dataset=1` continua funcionando com os mesmos parâmetros, formato e paginação (compatibilidade de clientes antigos).
+- Após apontamentos e importações, a tela solicita `fresh=1`, que invalida o cache de leitura e consulta novamente os dados após a transação para obter saldos atualizados. Regras de validação/SQL, redistribuição e rollback são mantidas.
+- Modais de apontamento e importação passam a ser carregados sob demanda, reduzindo o JavaScript inicial. O logotipo apresentado no cabeçalho utiliza WebP transparente de 480 px (arquivo original PNG também preservado).
+- Não há polling periódico, gravações adicionais nem mudança de pool, tabelas ou procedures do PostgreSQL. **A redução real de CU, memória do Neon e tempo até a primeira tela precisa ser confirmada com métricas da hospedagem sob carga equivalente.** O carregamento inicial transfere todas as programações diárias para o navegador; monitore o tamanho da resposta se o volume de dados crescer muito.

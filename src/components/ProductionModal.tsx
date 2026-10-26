@@ -24,6 +24,7 @@ export default function ProductionModal({
     ),
     [sector, setSector] = useState(1),
     [quantity, setQuantity] = useState(""),
+    [amounts, setAmounts] = useState<string[]>(["", "", "", ""]),
     [note, setNote] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -31,26 +32,50 @@ export default function ProductionModal({
   const prog = order.programacoes.find((p) => p.id === selected)!;
   const current = prog.setores.find((s) => s.subsetor_id === sector)!;
   const value = Number(quantity),
-    next = mode === "adicionar" ? current.qtd_apontada + value : value;
-  const valid =
+    next = value;
+  const validCorrection =
     quantity !== "" &&
     Number.isInteger(value) &&
     value >= 0 &&
-    (mode === "corrigir" || value > 0) &&
     next <= prog.qtd_programada;
+  const batch = prog.setores.filter((s) => {
+    const amount = amounts[s.subsetor_id - 1];
+    return amount !== "" && Number(amount) > 0;
+  }).map((s) => ({
+    subsetor: s.subsetor_id,
+    quantidade: Number(amounts[s.subsetor_id - 1]),
+    versao: s.versao,
+  }));
+  const invalidAmounts = prog.setores.some((s) => {
+    const raw = amounts[s.subsetor_id - 1];
+    if (raw === "") return false;
+    const amount = Number(raw);
+    return !Number.isSafeInteger(amount) || amount < 0 ||
+      amount > prog.qtd_programada - s.qtd_apontada;
+  });
+  const valid = mode === "adicionar"
+    ? batch.length > 0 && !invalidAmounts
+    : validCorrection;
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!valid || busy) return;
     setBusy(true);
     setError("");
-    const payload = {
-      programacao: selected,
-      subsetor: sector,
-      quantidade: value,
-      modo: mode,
-      versao: current.versao,
-      observacao: note,
-    };
+    const payload = mode === "adicionar"
+      ? {
+          programacao: selected,
+          apontamentos: batch,
+          modo: "adicionar" as const,
+          observacao: note,
+        }
+      : {
+          programacao: selected,
+          subsetor: sector,
+          quantidade: value,
+          modo: "corrigir" as const,
+          versao: current.versao,
+          observacao: note,
+        };
     const key = JSON.stringify(payload);
     if (retry.current?.key !== key)
       retry.current = { key, id: newRequestId() };
@@ -83,6 +108,7 @@ export default function ProductionModal({
             onChange={(e) => {
               setSelected(+e.target.value);
               setQuantity("");
+              setAmounts(["", "", "", ""]);
             }}
           >
             {order.programacoes.map((p) => (
@@ -101,6 +127,64 @@ export default function ProductionModal({
             : ""}
           O horário do registro será o de agora.
         </div>
+        {mode === "adicionar" && (
+          <fieldset className="multi-sector" disabled={busy}>
+            <legend>Quantidade a apontar por subsetor</legend>
+            <p className="multi-sector-help">
+              Preencha apenas os subsetores produzidos. Cada quantidade tem seu próprio saldo;
+              campos vazios ou com zero não serão registrados.
+            </p>
+            <div className="multi-sector-list">
+              {SECTORS.map((name, i) => {
+                const entry = prog.setores.find((s) => s.subsetor_id === i + 1)!;
+                const pending = prog.qtd_programada - entry.qtd_apontada;
+                const raw = amounts[i];
+                const qty = Number(raw);
+                const invalid = raw !== "" && (
+                  !Number.isSafeInteger(qty) || qty < 0 || qty > pending
+                );
+                return (
+                  <div key={name} className={`multi-sector-row ${invalid ? "invalid" : ""}`}>
+                    <div className="multi-sector-meta">
+                      <strong>{name}</strong>
+                      <span>{entry.qtd_apontada} produzido(s) · {pending} pendente(s)</span>
+                    </div>
+                    <label className="multi-sector-quantity">
+                      <span className="sr-only">Quantidade de {name}</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        step="1"
+                        min="0"
+                        max={pending}
+                        placeholder="0"
+                        value={raw}
+                        aria-invalid={invalid}
+                        onChange={(e) => setAmounts((previous) =>
+                          previous.map((amount, index) => index === i ? e.target.value : amount))}
+                      />
+                    </label>
+                    {invalid && <span className="multi-sector-error">Saldo disponível: {pending}.</span>}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="multi-sector-summary" aria-live="polite">
+              <span>{batch.length} subsetor(es) selecionado(s)</span>
+              <strong>{batch.reduce((total, item) => total + item.quantidade, 0)} apontamento(s) de peças</strong>
+            </div>
+            <p className="multi-sector-help">
+              A confirmação é conjunta: se algum subsetor falhar na validação,
+              nenhum apontamento deste envio será salvo.
+            </p>
+            {invalidAmounts && (
+              <div className="error-inline" role="alert">
+                Corrija as quantidades destacadas antes de confirmar.
+              </div>
+            )}
+          </fieldset>
+        )}
+        {mode === "corrigir" && <>
         <fieldset disabled={busy} className="sector-picker">
           <legend>Subsetor</legend>
           {SECTORS.map((s, i) => (
@@ -132,24 +216,16 @@ export default function ProductionModal({
           </div>
         </div>
         <label>
-          {mode === "adicionar"
-            ? "Quantidade produzida neste lançamento"
-            : "Novo total produzido"}
+          Novo total produzido
           <input
             autoFocus
             disabled={busy}
             inputMode="numeric"
             type="number"
-            min={mode === "adicionar" ? 1 : 0}
-            max={
-              mode === "adicionar"
-                ? prog.qtd_programada - current.qtd_apontada
-                : prog.qtd_programada
-            }
+            min={0}
+            max={prog.qtd_programada}
             step="1"
-            placeholder={
-              mode === "corrigir" ? String(current.qtd_apontada) : "0"
-            }
+            placeholder={String(current.qtd_apontada)}
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
           />
@@ -171,6 +247,7 @@ export default function ProductionModal({
             )}
           </div>
         )}
+        </>}
         <label>
           Observação <span className="muted">(opcional)</span>
           <textarea

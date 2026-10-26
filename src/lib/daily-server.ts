@@ -1,9 +1,9 @@
 import "server-only";
 import { db, ApiError } from "./server";
 import { createRequestCache } from "./request-cache";
-import { dailyListing, type StoredAllocation, type StoredOrder, type StoredSchedule } from "./daily-listing";
+import { dailyDataset, dailyListing, type StoredAllocation, type StoredOrder, type StoredSchedule } from "./daily-listing";
 import { manausDate } from "./domain";
-import { type Filters, type Listing } from "./types";
+import { type DailyDataset, type Filters, type Listing } from "./types";
 
 type Snapshot = {
   orders: StoredOrder[];
@@ -55,5 +55,14 @@ export async function getDailyListing(filters: Filters, force = false) {
   return dailyListing(
     snapshot.orders, snapshot.schedules, snapshot.allocations,
     filters, manausDate(), snapshot.revision, snapshot.lastImport,
+  );
+}
+
+/** Returns all per-date rows from the very same cached SQL snapshot. */
+export async function getDailyDataset(force = false): Promise<DailyDataset> {
+  const snapshot = await snapshotCache.get(force);
+  return dailyDataset(
+    snapshot.orders, snapshot.schedules, snapshot.allocations,
+    manausDate(), snapshot.revision, snapshot.lastImport,
   );
 }

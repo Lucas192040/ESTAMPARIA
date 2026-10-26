@@ -1,7 +1,6 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Factory,
   Search,
   Settings2,
   RotateCcw,
@@ -31,12 +30,16 @@ import { dateLabel, numberLabel } from "@/lib/domain";
 import OrderCard from "./OrderCard";
 import OrderTable from "./OrderTable";
 import { fetchJson } from "@/lib/client";
-import ImportPanel from "./ImportPanel";
-import ProductionModal from "./ProductionModal";
+import dynamic from "next/dynamic";
+import { filterDailyDataset } from "@/lib/daily-listing";
+import type { DailyDataset } from "@/lib/types";
+// The modal and Excel import UI are not needed during first paint.
+const ImportPanel = dynamic(() => import("./ImportPanel"), { ssr: false });
+const ProductionModal = dynamic(() => import("./ProductionModal"), { ssr: false });
 export default function Dashboard() {
   const [connected, setConnected] = useState<boolean | null>(null),
     [filters, setFilters] = useState<Filters>(EMPTY_FILTERS),
-    [data, setData] = useState<Listing | null>(null),
+    [dataset, setDataset] = useState<DailyDataset | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [settings, setSettings] = useState(false),
@@ -49,6 +52,12 @@ export default function Dashboard() {
     mode: "adicionar" | "corrigir";
     schedule?: number;
   } | null>(null);
+  // Local filtering is shared with the previous server-side listing logic.
+  // Search, sorting and pagination now consume zero API/Neon requests.
+  const data = useMemo<Listing | null>(
+    () => dataset ? filterDailyDataset(dataset, filters) : null,
+    [dataset, filters],
+  );
   const forceNext = useRef(false);
   const lastSuccessfulRefresh = useRef(0);
   const reload = useCallback(() => setRefresh((v) => v + 1), []);
@@ -71,26 +80,25 @@ export default function Dashboard() {
   }, [notice]);
   useEffect(() => {
     const ac = new AbortController();
-    const t = setTimeout(async () => {
+    // No 400ms delay: first load and explicit refresh start immediately.
+    const load = async () => {
       setLoading(true);
       setError("");
       try {
-        const params = new URLSearchParams(
-          Object.entries(filters).map(([k, v]) => [k, String(v)]),
-        );
+        const params = new URLSearchParams({ dataset: "1" });
         // Depois de uma gravação, consultar dados atuais independentemente do
         // cache curto mantido nas instâncias serverless.
         if (forceNext.current) {
           params.set("fresh", "1");
         }
-        const result = await fetchJson<Listing & { connected: boolean }>(
+        const result = await fetchJson<DailyDataset & { connected: boolean }>(
           `/api/ops?${params}`,
           { signal: ac.signal },
         );
         forceNext.current = false;
         lastSuccessfulRefresh.current = Date.now();
         setConnected(result.connected);
-        setData(result.connected ? result : null);
+        setDataset(result.connected ? result : null);
       } catch (e) {
         if (!ac.signal.aborted) {
           setConnected(false);
@@ -99,12 +107,10 @@ export default function Dashboard() {
       } finally {
         if (!ac.signal.aborted) setLoading(false);
       }
-    }, 400);
-    return () => {
-      clearTimeout(t);
-      ac.abort();
     };
-  }, [filters, refresh]);
+    void load();
+    return () => ac.abort();
+  }, [refresh]);
   const update = (key: keyof Filters, value: string) =>
     setFilters((f) => ({ ...f, [key]: value, pagina: 1 }));
   const active = Object.entries(filters).filter(
@@ -118,10 +124,14 @@ export default function Dashboard() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <a href="/" className="brand" aria-label="Estamparia, início">
-          <div className="brand-symbol">
-            <Factory size={30} strokeWidth={1.5} />
-          </div>
+        <a href="/" className="brand" aria-label="ITAM Transformadores — Estamparia, início">
+          <img
+            src="/logo-itam-compact.webp"
+            alt="ITAM Transformadores"
+            className="brand-logo"
+            width="480"
+            height="216"
+          />
           <div>
             <h1>
               Estamparia<span className="brand-dot">.</span>

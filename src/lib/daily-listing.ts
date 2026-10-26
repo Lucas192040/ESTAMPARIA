@@ -1,7 +1,7 @@
 import { statusOf } from "./domain";
-import { type Filters, type Listing, type Order, type Schedule, type Sector, type Status } from "./types";
+import { type DailyDataset, type Filters, type Listing, type Order, type Schedule, type Sector, type Status } from "./types";
 
-// Esta projeção é somente de leitura. Não altera programações, apontamentos ou FIFO.
+// Pure projection; never changes allocations, scheduling, or FIFO rules.
 export type StoredOrder = Pick<Order,
   "id" | "op_pai" | "referencia_prod" | "potencia_pa" | "linha_prod" |
   "nome_cliente" | "qtd_op_pai">;
@@ -10,15 +10,15 @@ export type StoredAllocation = { programacao_id: number; subsetor_id: number; qu
 type ImportInfo = Listing["ultima_importacao"];
 const PAGE_SIZE = 12;
 
-export function dailyListing(
+/** Once per refresh, project OPs into their daily rows, preserving schedule IDs. */
+export function dailyDataset(
   orders: StoredOrder[],
   schedules: StoredSchedule[],
   allocations: StoredAllocation[],
-  filters: Filters,
   today: string,
   revision: number,
   lastImport: ImportInfo,
-): Listing {
+): DailyDataset {
   const orderById = new Map(orders.map((o) => [Number(o.id), o]));
   const allocationBySchedule = new Map<number, Sector[]>();
   for (const a of allocations) {
@@ -64,9 +64,6 @@ export function dailyListing(
     row.qtd_programada += schedule.qtd_programada;
   }
 
-  const rawText = filters.q.toLocaleLowerCase("pt-BR");
-  const freeSeries = /^\d{1,15}$/.test(filters.q) ? Number(filters.q) : null;
-  const series = filters.serie ? Number(filters.serie) : null;
   const allRows = Array.from(groups.values()).map((row) => {
     row.programacoes.sort((a, b) =>
       a.serie_inicial - b.serie_inicial || a.id - b.id,
@@ -74,6 +71,25 @@ export function dailyListing(
     row.situacao = statusOf(row.programacoes, today);
     return row;
   });
+  return {
+    rows: allRows,
+    revision,
+    today,
+    options: {
+      clientes: Array.from(new Set(orders.map((o) => o.nome_cliente))).sort((a,b) => a.localeCompare(b, "pt-BR")),
+      linhas: Array.from(new Set(orders.map((o) => o.linha_prod))).sort((a,b) => a.localeCompare(b, "pt-BR")),
+      potencias: Array.from(new Set(orders.map((o) => Number(o.potencia_pa)))).sort((a,b) => a - b),
+    },
+    ultima_importacao: lastImport,
+  };
+}
+
+/** Filters and paginates the same projected rows locally, without a read request. */
+export function filterDailyDataset(dataset: DailyDataset, filters: Filters): Listing {
+  const { rows: allRows, revision, today, options, ultima_importacao: lastImport } = dataset;
+  const rawText = filters.q.toLocaleLowerCase("pt-BR");
+  const freeSeries = /^\d{1,15}$/.test(filters.q) ? Number(filters.q) : null;
+  const series = filters.serie ? Number(filters.serie) : null;
   const filtered = allRows.filter((row) => {
     if (rawText && ![
       row.op_pai,
@@ -110,7 +126,7 @@ export function dailyListing(
       ? Number(a.op_pai) - Number(b.op_pai)
       : a.op_pai.localeCompare(b.op_pai, "pt-BR", { numeric: true });
   };
-  visible.sort((a, b) => {
+  const sorted = [...visible].sort((a, b) => {
     let result = 0;
     if (filters.ordem === "data_desc") result = b.data_inicial.localeCompare(a.data_inicial);
     else if (filters.ordem === "op_asc") result = opCompare(a, b);
@@ -119,20 +135,32 @@ export function dailyListing(
     if (!result) result = a.data_inicial.localeCompare(b.data_inicial);
     return result || opCompare(a, b) || a.programacoes[0].id - b.programacoes[0].id;
   });
-  const total = visible.length;
+  const total = sorted.length;
   return {
-    items: visible.slice((filters.pagina - 1) * PAGE_SIZE, filters.pagina * PAGE_SIZE),
+    items: sorted.slice((filters.pagina - 1) * PAGE_SIZE, filters.pagina * PAGE_SIZE),
     total,
     pagina: filters.pagina,
     paginas: Math.ceil(total / PAGE_SIZE),
     revision,
     today,
     counts,
-    options: {
-      clientes: Array.from(new Set(orders.map((o) => o.nome_cliente))).sort((a,b) => a.localeCompare(b, "pt-BR")),
-      linhas: Array.from(new Set(orders.map((o) => o.linha_prod))).sort((a,b) => a.localeCompare(b, "pt-BR")),
-      potencias: Array.from(new Set(orders.map((o) => Number(o.potencia_pa)))).sort((a,b) => a - b),
-    },
+    options,
     ultima_importacao: lastImport,
   };
+}
+
+/** Original server API remains supported and uses the identical business rules. */
+export function dailyListing(
+  orders: StoredOrder[],
+  schedules: StoredSchedule[],
+  allocations: StoredAllocation[],
+  filters: Filters,
+  today: string,
+  revision: number,
+  lastImport: ImportInfo,
+): Listing {
+  return filterDailyDataset(
+    dailyDataset(orders, schedules, allocations, today, revision, lastImport),
+    filters,
+  );
 }

@@ -1,6 +1,9 @@
 import "server-only";
 import { Pool, type PoolConfig } from "pg";
 import { ZodError } from "zod";
+import { executeAtomicBatch } from "./production-batch";
+import type { z } from "zod";
+import type { productionBatchSchema } from "./validation";
 import { isLocalDevelopmentOrigin } from "./local-network";
 
 export class ApiError extends Error {
@@ -46,11 +49,35 @@ export async function rpc<T>(name: Procedures, args: Record<string, unknown>): P
     const result = await db().query(procedures[name], values);
     return result.rows[0]?.value as T;
   } catch (error) {
-    const code = (error as { code?: string }).code;
-    if (["22023", "40001", "P0002"].includes(code || ""))
-      throw new ApiError((error as Error).message, code === "22023" ? 422 : 409);
-    console.error("Falha na operação PostgreSQL", { name, code, message: (error as Error).message });
-    throw new ApiError("Falha no banco de dados. Consulte os logs do servidor.", 503);
+    throw databaseFailure(error, name);
+  }
+}
+
+
+function databaseFailure(error: unknown, operation: string): ApiError {
+  const code = (error as { code?: string })?.code;
+  if (["22023", "40001", "P0002"].includes(code || ""))
+    return new ApiError((error as Error).message, code === "22023" ? 422 : 409);
+  console.error("Falha na operação PostgreSQL", { operation, code, message: (error as Error).message });
+  return new ApiError("Falha no banco de dados. Consulte os logs do servidor.", 503);
+}
+
+/** All items are recorded through the original stored procedure on ONE connection
+ * inside ONE transaction. If any item fails, the previous writes roll back.
+ * Request IDs are deterministic per sector, so retrying a committed batch is safe.
+ */
+export async function rpcProductionBatch(p: z.infer<typeof productionBatchSchema>) {
+  const client = await db().connect();
+  try {
+    return await executeAtomicBatch(
+      p,
+      (statement, params) => client.query(statement, params),
+      procedures.est_registrar,
+    );
+  } catch (error) {
+    throw databaseFailure(error, "est_registrar (lote atômico)");
+  } finally {
+    client.release();
   }
 }
 

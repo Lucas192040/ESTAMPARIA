@@ -1577,3 +1577,74 @@ tr:last-child td {
   .program-table td, .program-table th { padding: 12px 9px; }
   .daily-card-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ITAM visual identity — responsive, image proportions preserved. */
+.brand-logo {
+  display: block;
+  width: 100px;
+  height: auto;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+@media (max-width: 650px) {
+  .brand-logo { width: 72px; }
+}
+
+/* Independent multi-sector production quantities. */
+.multi-sector {
+  border: 0;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+}
+.multi-sector legend {
+  color: #b5c0ce;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.multi-sector-help {
+  color: #93a8c0;
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+.multi-sector-list {
+  border: 1px solid #2c3c4e;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.multi-sector-row {
+  padding: 12px 14px;
+  background: #101a26;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 105px;
+  align-items: center;
+  gap: 8px 14px;
+  border-bottom: 1px solid #293847;
+}
+.multi-sector-row:last-child { border-bottom: 0; }
+.multi-sector-row.invalid { border-color: #be6565; }
+.multi-sector-meta { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.multi-sector-meta strong { color: #e1ebf7; font-size: 13px; }
+.multi-sector-meta span { color: #9fb1c7; font-size: 11px; }
+.multi-sector-quantity input { width: 100%; min-width: 0; text-align: center; }
+.multi-sector-quantity input[aria-invalid="true"] { border-color: #d86b6b; }
+.multi-sector-error { grid-column: 1 / -1; color: #ffa5a5; font-size: 11px; }
+.multi-sector-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  border-radius: 7px;
+  background: #13382e;
+  padding: 12px;
+  color: #8ce4c4;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.multi-sector-summary strong { color: #b7f2dd; }
+@media (max-width: 460px) {
+  .multi-sector-row { grid-template-columns: minmax(0, 1fr) 85px; padding: 10px; }
+  .multi-sector-meta span { font-size: 10px; }
+}

@@ -101,3 +101,12 @@ export type ImportPreview = {
     removed_records: number;
   } | null;
 };
+
+/** Complete daily view, sent once per refresh rather than once per UI filter. */
+export type DailyDataset = {
+  rows: Order[];
+  revision: number;
+  today: string;
+  options: Listing["options"];
+  ultima_importacao: Listing["ultima_importacao"];
+};
