@@ -17,6 +17,7 @@ import {
   AlertCircle,
   RefreshCw,
   Layers3,
+  Factory,
 } from "lucide-react";
 import {
   EMPTY_FILTERS,

@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+<<<<<<< HEAD
 import { executeAtomicBatch, sectorRequestId } from "../src/lib/production-batch.ts";
+=======
+import { executeAtomicBatch, sectorRequestId } from "../src/lib/production-batch";
+>>>>>>> 448c87a (AJUSTE PERFORMACE2.0)
 
 const requestId = "b48d78c8-93cc-4471-a4aa-728ca52a8ec1";
 const payload = {

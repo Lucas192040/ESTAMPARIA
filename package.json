@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Programação diária e apontamentos da Estamparia (Neon PostgreSQL).",
   "scripts": {
+    "prebuild": "node scripts/check-deploy.mjs",
     "dev": "node scripts/dev.mjs",
     "build": "next build --webpack",
     "start": "next start --hostname 0.0.0.0",
