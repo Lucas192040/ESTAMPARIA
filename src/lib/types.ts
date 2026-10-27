@@ -30,6 +30,7 @@ export type Schedule = {
   serie_inicial: number;
   serie_final: number;
   setores: Sector[];
+  radiador?: { qtd_apontada: number; versao: number };
 };
 export type Order = {
   id: number;
@@ -99,6 +100,7 @@ export type ImportPreview = {
     preserved: number;
     created: number;
     removed_records: number;
+    removed_radiador_records?: number;
   } | null;
 };
 

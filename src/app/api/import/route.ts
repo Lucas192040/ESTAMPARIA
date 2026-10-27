@@ -11,10 +11,12 @@ import {
 import { parseExcel, MAX_FILE_SIZE } from "@/lib/importer";
 import { invalidateDailyListing } from "@/lib/daily-server";
 import type { ImportPreview } from "@/lib/types";
+import { requireRole } from "@/lib/auth";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 export async function POST(req: Request) {
   try {
+    await requireRole("estamparia");
     await guard(req, "import");
     const body = await limitedBody(req, MAX_FILE_SIZE + 64000);
     const form = await new Response(body, {

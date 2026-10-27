@@ -1,9 +1,11 @@
 import { answer, failure, guard, limitedBody, rpc, rpcProductionBatch } from "@/lib/server";
 import { invalidateDailyListing } from "@/lib/daily-server";
 import { productionBatchSchema, productionSchema } from "@/lib/validation";
+import { requireRole } from "@/lib/auth";
 export const runtime = "nodejs";
 export async function POST(req: Request) {
   try {
+    await requireRole("estamparia");
     await guard(req, "write");
     const body: unknown = JSON.parse((await limitedBody(req, 8192)).toString("utf8"));
     if (body && typeof body === "object" && "apontamentos" in body) {

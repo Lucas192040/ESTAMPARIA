@@ -1,7 +1,7 @@
 import "server-only";
 import { db, ApiError } from "./server";
 import { createRequestCache } from "./request-cache";
-import { dailyDataset, dailyListing, type StoredAllocation, type StoredOrder, type StoredSchedule } from "./daily-listing";
+import { dailyDataset, dailyListing, type StoredAllocation, type StoredRadiatorAllocation, type StoredOrder, type StoredSchedule } from "./daily-listing";
 import { manausDate } from "./domain";
 import { type DailyDataset, type Filters, type Listing } from "./types";
 
@@ -9,6 +9,7 @@ type Snapshot = {
   orders: StoredOrder[];
   schedules: StoredSchedule[];
   allocations: StoredAllocation[];
+  radiatorAllocations: StoredRadiatorAllocation[];
   revision: number;
   lastImport: Listing["ultima_importacao"];
 };
@@ -26,6 +27,8 @@ SELECT
                  serie_inicial, serie_final FROM public.est_programacoes) p), '[]'::jsonb) AS schedules,
   COALESCE((SELECT jsonb_agg(to_jsonb(a) ORDER BY a.programacao_id, a.subsetor_id)
     FROM (SELECT programacao_id, subsetor_id, quantidade, versao FROM public.est_alocacoes) a), '[]'::jsonb) AS allocations,
+  COALESCE((SELECT jsonb_agg(to_jsonb(a) ORDER BY a.programacao_id)
+    FROM (SELECT programacao_id, quantidade, versao FROM public.rad_alocacoes) a), '[]'::jsonb) AS "radiatorAllocations",
   (SELECT jsonb_build_object('nome_arquivo', nome_arquivo, 'realizado_em', realizado_em)
    FROM public.est_importacoes ORDER BY id DESC LIMIT 1) AS "lastImport"`;
 
@@ -54,7 +57,7 @@ export async function getDailyListing(filters: Filters, force = false) {
   const snapshot = await snapshotCache.get(force);
   return dailyListing(
     snapshot.orders, snapshot.schedules, snapshot.allocations,
-    filters, manausDate(), snapshot.revision, snapshot.lastImport,
+    filters, manausDate(), snapshot.revision, snapshot.lastImport, snapshot.radiatorAllocations,
   );
 }
 
@@ -63,6 +66,6 @@ export async function getDailyDataset(force = false): Promise<DailyDataset> {
   const snapshot = await snapshotCache.get(force);
   return dailyDataset(
     snapshot.orders, snapshot.schedules, snapshot.allocations,
-    manausDate(), snapshot.revision, snapshot.lastImport,
+    manausDate(), snapshot.revision, snapshot.lastImport, snapshot.radiatorAllocations,
   );
 }

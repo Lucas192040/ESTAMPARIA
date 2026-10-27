@@ -1648,3 +1648,27 @@ tr:last-child td {
   .multi-sector-row { grid-template-columns: minmax(0, 1fr) 85px; padding: 10px; }
   .multi-sector-meta span { font-size: 10px; }
 }
+
+/* Radiador e autenticação: layouts independentes, progresso compartilhado. */
+.radiator-track > span { background: #38c7c0; }
+.radiator-progress { margin-top: 19px; padding-top: 15px; border-top: 1px solid #2b3e50; }
+.radiator-heading { color: #5de5db; letter-spacing: .09em; font-weight: 750; font-size: 11px; margin-bottom: 10px; }
+.radiator-heading small { color: #95aaba; letter-spacing: 0; font-weight: normal; margin-left: 6px; }
+.radiator-progress-numbers { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; }
+.radiator-progress-numbers span { color: #9baebf; }
+.login-shell { min-height: 100svh; display: flex; align-items: center; justify-content: center; padding: 24px; background: radial-gradient(circle at 50% 0%, #142b42, #090d12 65%); }
+.login-panel { width: 100%; max-width: 470px; padding: 38px; border: 1px solid #2c3b4b; background: #101a25; box-shadow: 0 22px 72px #0007; border-radius: 16px; display: grid; gap: 18px; }
+.login-logo { max-width: 155px; width: 100%; height: auto; margin-bottom: 6px; }
+.login-heading { display: flex; align-items: center; gap: 12px; color: #e8f5ff; }
+.login-heading h1 { font-size: 23px; margin: 0; }
+.login-panel > p, .login-panel > small { color: #98aabd; line-height: 1.5; margin: 0; }
+.login-sectors { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.login-sectors legend { grid-column: 1 / -1; color: #b9cfe1; margin-bottom: 9px; font-size: 12px; }
+.login-sectors label { border: 1px solid #34465a; padding: 16px 12px; border-radius: 8px; font-weight: 650; font-size: 13px; cursor: pointer; display:flex; align-items:center; gap: 8px; }
+.login-sectors label.active { border-color: #42d5c5; background: #13302e; }
+.login-sectors input { accent-color: #41ceb9; }
+.login-password { display: grid; gap: 10px; color: #b9cfe1; font-size: 12px; }
+.login-password > span { display: flex; align-items: center; gap: 7px; }
+.login-password input { width: 100%; }
+.login-submit { min-height: 47px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+@media(max-width: 530px) { .login-panel { padding: 24px; } .login-sectors label { padding: 12px 7px; font-size: 12px; } }

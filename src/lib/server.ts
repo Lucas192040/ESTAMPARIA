@@ -36,6 +36,7 @@ const procedures = {
   est_previa_importacao: "SELECT public.est_previa_importacao($1::jsonb) AS value",
   est_importar: "SELECT public.est_importar($1::jsonb,$2::text,$3::bigint,$4::uuid) AS value",
   est_registrar: "SELECT public.est_registrar($1::uuid,$2::bigint,$3::smallint,$4::integer,$5::text,$6::bigint,$7::text) AS value",
+  rad_registrar: "SELECT public.rad_registrar($1::uuid,$2::bigint,$3::integer,$4::text,$5::bigint,$6::text) AS value",
 } as const;
 
 type Procedures = keyof typeof procedures;
@@ -44,7 +45,9 @@ export async function rpc<T>(name: Procedures, args: Record<string, unknown>): P
     ? [JSON.stringify(args.p_ops)]
     : name === "est_importar"
       ? [JSON.stringify(args.p_rows), args.p_nome, args.p_revision, args.p_request]
-      : [args.p_request, args.p_programacao, args.p_subsetor, args.p_quantidade, args.p_modo, args.p_versao, args.p_observacao];
+      : name === "rad_registrar"
+        ? [args.p_request, args.p_programacao, args.p_quantidade, args.p_modo, args.p_versao, args.p_observacao]
+        : [args.p_request, args.p_programacao, args.p_subsetor, args.p_quantidade, args.p_modo, args.p_versao, args.p_observacao];
   try {
     const result = await db().query(procedures[name], values);
     return result.rows[0]?.value as T;
@@ -97,7 +100,7 @@ function localLimit(key: string, max: number) {
     throw new ApiError("Muitas requisições. Aguarde um minuto.", 429);
   }
 }
-export async function guard(request: Request, kind: "read" | "write" | "import") {
+export async function guard(request: Request, kind: "read" | "write" | "import" | "auth") {
   if (process.env.NODE_ENV === "production" &&
     (process.env.ACCESS_RESTRICTION_CONFIRMED !== "true" || !process.env.APP_ORIGIN))
     throw new ApiError("Configure a proteção de acesso na hospedagem.", 503);
@@ -112,7 +115,7 @@ export async function guard(request: Request, kind: "read" | "write" | "import")
   const ip = process.env.VERCEL
     ? request.headers.get("x-vercel-forwarded-for")?.split(",")[0] || "shared"
     : "shared";
-  localLimit(`${ip}:${kind}`, kind === "read" ? 120 : kind === "import" ? 8 : 60);
+  localLimit(`${ip}:${kind}`, kind === "read" ? 120 : kind === "import" ? 8 : kind === "auth" ? 10 : 60);
 }
 export async function limitedBody(request: Request, max: number) {
   const declared = Number(request.headers.get("content-length") || 0);

@@ -85,8 +85,10 @@ export function Progress({
 export default function OrderCard({
   order,
   onAction,
+  mode = "estamparia",
 }: {
   order: Order;
+  mode?: "estamparia" | "radiador";
   onAction: (
     o: Order,
     mode: "adicionar" | "corrigir",
@@ -143,6 +145,14 @@ export default function OrderCard({
             )}
           />
         ))}
+        <div className="radiator-progress">
+          <div className="radiator-heading">RADIADOR <small>(controle independente)</small></div>
+          {(() => { const produced = order.programacoes.reduce((total,p) => total + (p.radiador?.qtd_apontada || 0), 0);
+            const percent = order.qtd_programada ? produced / order.qtd_programada * 100 : 0;
+            return <><div className="radiator-progress-numbers"><strong>{numberLabel(produced)} / {numberLabel(order.qtd_programada)}</strong><span>{Math.round(percent)}% · {numberLabel(order.qtd_programada - produced)} pendentes</span></div>
+              <div className="table-progress-track radiator-track"><span style={{width: `${Math.min(100,percent)}%`}}/></div></>;
+          })()}
+        </div>
       </div>
       <div className="card-actions">
         <button className="primary" onClick={() => onAction(order, "adicionar", firstSchedule)}>

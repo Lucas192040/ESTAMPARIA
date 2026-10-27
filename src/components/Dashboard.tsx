@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Layers3,
   Factory,
+  LogOut,
 } from "lucide-react";
 import {
   EMPTY_FILTERS,
@@ -37,7 +38,8 @@ import type { DailyDataset } from "@/lib/types";
 // The modal and Excel import UI are not needed during first paint.
 const ImportPanel = dynamic(() => import("./ImportPanel"), { ssr: false });
 const ProductionModal = dynamic(() => import("./ProductionModal"), { ssr: false });
-export default function Dashboard() {
+const RadiatorModal = dynamic(() => import("./RadiatorModal"), { ssr: false });
+export default function Dashboard({ mode }: { mode: "estamparia" | "radiador" }) {
   const [connected, setConnected] = useState<boolean | null>(null),
     [filters, setFilters] = useState<Filters>(EMPTY_FILTERS),
     [dataset, setDataset] = useState<DailyDataset | null>(null),
@@ -56,8 +58,8 @@ export default function Dashboard() {
   // Local filtering is shared with the previous server-side listing logic.
   // Search, sorting and pagination now consume zero API/Neon requests.
   const data = useMemo<Listing | null>(
-    () => dataset ? filterDailyDataset(dataset, filters) : null,
-    [dataset, filters],
+    () => dataset ? filterDailyDataset(dataset, filters, mode) : null,
+    [dataset, filters, mode],
   );
   const forceNext = useRef(false);
   const lastSuccessfulRefresh = useRef(0);
@@ -117,6 +119,10 @@ export default function Dashboard() {
   const active = Object.entries(filters).filter(
     ([k, v]) => !["ordem", "pagina"].includes(k) && v !== "",
   ).length;
+  async function logout() {
+    try { await fetchJson("/api/auth/logout", { method: "POST" }); window.location.assign("/login"); }
+    catch (e) { setError((e as Error).message); }
+  }
   function success(message: string) {
     setNotice(message);
     forceNext.current = true;
@@ -125,7 +131,7 @@ export default function Dashboard() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <a href="/" className="brand" aria-label="ITAM Transformadores — Estamparia, início">
+        <a href={`/${mode}`} className="brand" aria-label={`ITAM Transformadores — ${mode}, início`}>
           <img
             src="/logo-itam-compact.webp"
             alt="ITAM Transformadores"
@@ -135,7 +141,7 @@ export default function Dashboard() {
           />
           <div>
             <h1>
-              Estamparia<span className="brand-dot">.</span>
+              {mode === "radiador" ? "Radiador" : "Estamparia"}<span className="brand-dot">.</span>
             </h1>
             <p>Acompanhamento da Produção</p>
           </div>
@@ -149,24 +155,21 @@ export default function Dashboard() {
             onChange={(e) => update("q", e.target.value)}
           />
         </div>
-        <button
-          className="secondary settings-button"
-          onClick={() => setSettings(true)}
-        >
-          <Settings2 size={17} />
-          <span>Configurações</span>
-        </button>
+        {mode === "estamparia" && <button className="secondary settings-button" onClick={() => setSettings(true)}>
+          <Settings2 size={17} /><span>Configurações</span>
+        </button>}
+        <button className="secondary settings-button" onClick={() => void logout()}><LogOut size={16}/> <span>Sair</span></button>
       </header>
       <main>
         <div className="page-heading">
           <div className="eyebrow">
             <span className="live-dot" />
-            CHÃO DE FÁBRICA <span className="slash">/</span> ESTAMPARIA
+            CHÃO DE FÁBRICA <span className="slash">/</span> {mode === "radiador" ? "RADIADOR" : "ESTAMPARIA"}
           </div>
           <div className="page-title-row">
             <div>
               <h2>Visão da produção</h2>
-              <p>Da programação à peça pronta. Acompanhe cada etapa.</p>
+              <p>{mode === "radiador" ? "Apontamento de Radiador e progresso da Estamparia por OP." : "Da programação à peça pronta. Acompanhe também o Radiador."}</p>
             </div>
             <div className="sync">
               <span className={`connection-dot ${connected ? "green" : ""}`} />
@@ -207,7 +210,7 @@ export default function Dashboard() {
                 status: "CONCLUIDA",
                 icon: CheckCircle2,
                 label: "Concluídas",
-                caption: "Datas com subsetores finalizados",
+                caption: mode === "radiador" ? "Radiadores concluídos por data" : "Datas com subsetores finalizados",
                 color: "green",
               },
               {
@@ -410,6 +413,7 @@ export default function Dashboard() {
           view === "table" ? (
             <div className={loading ? "refreshing" : ""} aria-busy={loading}>
               <OrderTable
+                mode={mode}
                 items={data.items}
                 onAction={(order, mode, schedule) => setEditing({ order, mode, schedule })}
               />
@@ -418,6 +422,7 @@ export default function Dashboard() {
             <div className={`orders ${loading ? "refreshing" : ""}`} aria-busy={loading}>
               {data.items.map((order) => (
                 <OrderCard
+                  mode={mode}
                   key={`${order.id}:${order.data_inicial}`}
                   order={order}
                   onAction={(order, mode, schedule) => setEditing({ order, mode, schedule })}
@@ -448,19 +453,17 @@ export default function Dashboard() {
               <p>
                 {active
                   ? "Ajuste os filtros para encontrar outras ordens de produção."
-                  : "Importe a programação em Configurações para acompanhar as ordens e apontar a produção dos quatro subsetores."}
+                  : mode === "radiador" ? "A programação da Estamparia aparecerá aqui após a importação feita no setor autorizado." : "Importe a programação em Configurações para acompanhar as ordens e apontar a produção dos quatro subsetores."}
               </p>
-              <button
+              {(active || mode === "estamparia") && <button
                 className="primary"
-                onClick={() =>
-                  active ? setFilters(EMPTY_FILTERS) : setSettings(true)
-                }
+                onClick={() => active ? setFilters(EMPTY_FILTERS) : setSettings(true)}
               >
                 {active ? <RotateCcw size={17} /> : <Upload size={17} />}{" "}
                 {active ? "Limpar filtros" : "Importar programação"}
                 <ArrowUpRight size={16} />
-              </button>
-              {!active && (
+              </button>}
+              {!active && mode === "estamparia" && (
                 <div className="empty-sectors">
                   <span>CORPO</span>
                   <i />
@@ -504,7 +507,7 @@ export default function Dashboard() {
         <footer className="footer">
           <span>
             <span className="footer-dot" />
-            ESTAMPARIA <span className="muted">/ Controle de produção</span>
+            {mode === "radiador" ? "RADIADOR" : "ESTAMPARIA"} <span className="muted">/ Controle de produção</span>
           </span>
           <span>
             {data?.ultima_importacao
@@ -523,7 +526,7 @@ export default function Dashboard() {
           </button>
         </div>
       )}
-      {settings && (
+      {settings && mode === "estamparia" && (
         <ImportPanel
           connected={!!connected}
           onClose={() => setSettings(false)}
@@ -533,7 +536,7 @@ export default function Dashboard() {
           }}
         />
       )}
-      {editing && (
+      {editing && mode === "estamparia" && (
         <ProductionModal
           {...editing}
           onClose={() => setEditing(null)}
@@ -542,6 +545,11 @@ export default function Dashboard() {
             success("Produção salva com sucesso.");
           }}
         />
+      )}
+      {editing && mode === "radiador" && (
+        <RadiatorModal {...editing} onClose={() => setEditing(null)} onSuccess={() => {
+          setEditing(null); success("Radiador salvo com sucesso.");
+        }} />
       )}
     </div>
   );

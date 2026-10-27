@@ -192,6 +192,7 @@ export default function ImportPanel({
                       produção das OPs mantidas será redistribuída por data
                       (FIFO).
                     </p>
+                    <p><strong>{preview.database.removed_radiador_records || 0}</strong> registros históricos do Radiador serão excluídos se suas OPs não estiverem no arquivo.</p>
                   </div>
                 </div>
                 <label className="checkbox-label">

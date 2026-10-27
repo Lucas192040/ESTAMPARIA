@@ -1,10 +1,12 @@
 import { answer, failure, guard, configured } from "@/lib/server";
 import { getDailyDataset, getDailyListing } from "@/lib/daily-server";
 import { filtersSchema } from "@/lib/validation";
+import { requireRole } from "@/lib/auth";
 export const runtime = "nodejs";
 export async function GET(req: Request) {
   try {
     await guard(req, "read");
+    await requireRole();
     if (!configured()) return answer({ connected: false });
     const params = new URL(req.url).searchParams;
     const filters = filtersSchema.parse(Object.fromEntries(params));

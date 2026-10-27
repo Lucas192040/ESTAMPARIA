@@ -37,6 +37,15 @@ export const filtersSchema = z
     (v) => !v.inicio || !v.fim || v.inicio <= v.fim,
     "O início deve ser anterior ao fim.",
   );
+export const radiatorProductionSchema = z.object({
+  requestId: z.uuid(),
+  programacao: z.number().int().positive().safe(),
+  quantidade: z.number().int().min(0).max(2147483647),
+  modo: z.enum(["adicionar", "corrigir"]),
+  versao: z.number().int().nonnegative().safe(),
+  observacao: z.string().trim().max(500).default(""),
+}).refine((value) => value.modo !== "adicionar" || value.quantidade > 0, "Informe uma quantidade positiva.");
+
 export const productionSchema = z.object({
   requestId: z.uuid(),
   programacao: z.number().int().positive().safe(),

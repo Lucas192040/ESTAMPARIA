@@ -5,7 +5,8 @@ import { type DailyDataset, type Filters, type Listing, type Order, type Schedul
 export type StoredOrder = Pick<Order,
   "id" | "op_pai" | "referencia_prod" | "potencia_pa" | "linha_prod" |
   "nome_cliente" | "qtd_op_pai">;
-export type StoredSchedule = Omit<Schedule, "setores"> & { op_id: number };
+export type StoredSchedule = Omit<Schedule, "setores" | "radiador"> & { op_id: number };
+export type StoredRadiatorAllocation = { programacao_id: number; quantidade: number; versao: number };
 export type StoredAllocation = { programacao_id: number; subsetor_id: number; quantidade: number; versao: number };
 type ImportInfo = Listing["ultima_importacao"];
 const PAGE_SIZE = 12;
@@ -18,8 +19,12 @@ export function dailyDataset(
   today: string,
   revision: number,
   lastImport: ImportInfo,
+  radiatorAllocations: StoredRadiatorAllocation[] = [],
 ): DailyDataset {
   const orderById = new Map(orders.map((o) => [Number(o.id), o]));
+  const radiatorBySchedule = new Map(radiatorAllocations.map((a) => [Number(a.programacao_id), {
+    qtd_apontada: Number(a.quantidade), versao: Number(a.versao),
+  }]));
   const allocationBySchedule = new Map<number, Sector[]>();
   for (const a of allocations) {
     const id = Number(a.programacao_id);
@@ -59,6 +64,7 @@ export function dailyDataset(
       serie_inicial: Number(raw.serie_inicial),
       serie_final: Number(raw.serie_final),
       setores: allocationBySchedule.get(Number(raw.id)) || [],
+      radiador: radiatorBySchedule.get(Number(raw.id)) || { qtd_apontada: 0, versao: 0 },
     };
     row.programacoes.push(schedule);
     row.qtd_programada += schedule.qtd_programada;
@@ -84,8 +90,17 @@ export function dailyDataset(
   };
 }
 
+/** Radiador is independent: its status never participates in Estamparia completion. */
+export function radiatorStatus(schedules: Schedule[], today: string): Status {
+  if (!schedules.length) return "NAO_INICIADA";
+  if (schedules.every((p) => (p.radiador?.qtd_apontada || 0) === p.qtd_programada)) return "CONCLUIDA";
+  if (schedules.some((p) => p.data_programada < today && (p.radiador?.qtd_apontada || 0) < p.qtd_programada)) return "ATRASADA";
+  if (schedules.every((p) => (p.radiador?.qtd_apontada || 0) === 0)) return "NAO_INICIADA";
+  return "EM_ANDAMENTO";
+}
+
 /** Filters and paginates the same projected rows locally, without a read request. */
-export function filterDailyDataset(dataset: DailyDataset, filters: Filters): Listing {
+export function filterDailyDataset(dataset: DailyDataset, filters: Filters, sector: "estamparia" | "radiador" = "estamparia"): Listing {
   const { rows: allRows, revision, today, options, ultima_importacao: lastImport } = dataset;
   const rawText = filters.q.toLocaleLowerCase("pt-BR");
   const freeSeries = /^\d{1,15}$/.test(filters.q) ? Number(filters.q) : null;
@@ -115,10 +130,13 @@ export function filterDailyDataset(dataset: DailyDataset, filters: Filters): Lis
     NAO_INICIADA: 0,
   };
   // Os indicadores representam programações diárias (não OPs inteiras).
-  for (const row of filtered) counts[row.situacao]++;
-  const visible = filters.situacao
-    ? filtered.filter((r) => r.situacao === filters.situacao)
+  const forSector = sector === "radiador"
+    ? filtered.map((row) => ({ ...row, situacao: radiatorStatus(row.programacoes, today) }))
     : filtered;
+  for (const row of forSector) counts[row.situacao]++;
+  const visible = filters.situacao
+    ? forSector.filter((r) => r.situacao === filters.situacao)
+    : forSector;
   const opCompare = (a: Order, b: Order) => {
     const aNum = /^\d+$/.test(a.op_pai);
     const bNum = /^\d+$/.test(b.op_pai);
@@ -158,9 +176,10 @@ export function dailyListing(
   today: string,
   revision: number,
   lastImport: ImportInfo,
+  radiatorAllocations: StoredRadiatorAllocation[] = [],
 ): Listing {
   return filterDailyDataset(
-    dailyDataset(orders, schedules, allocations, today, revision, lastImport),
+    dailyDataset(orders, schedules, allocations, today, revision, lastImport, radiatorAllocations),
     filters,
   );
 }
