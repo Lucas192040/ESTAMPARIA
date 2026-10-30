@@ -1694,3 +1694,25 @@ tr:last-child td {
 @media (prefers-reduced-motion: reduce) {
   .late-alert-light { animation: none; }
 }
+
+
+/* Alerta visual em todo o cartão de atrasadas */
+.summary-alert {
+  border-color: rgba(255, 59, 79, 0.9);
+  animation: summary-alert-pulse 1.25s ease-in-out infinite;
+}
+@keyframes summary-alert-pulse {
+  0%, 100% {
+    background: linear-gradient(120deg, #24151c, #17141c);
+    border-color: rgba(255, 59, 79, 0.95);
+    box-shadow: 0 0 0 1px rgba(255, 59, 79, 0.22), 0 0 18px rgba(255, 59, 79, 0.28);
+  }
+  50% {
+    background: linear-gradient(120deg, #141c26, #101720);
+    border-color: #26303d;
+    box-shadow: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .summary-alert { animation: none; border-color: #ff3b4f; box-shadow: 0 0 0 1px rgba(255, 59, 79, 0.22); }
+}
