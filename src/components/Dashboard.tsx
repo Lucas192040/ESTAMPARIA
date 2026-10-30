@@ -57,19 +57,10 @@ export default function Dashboard({ mode }: { mode: "estamparia" | "radiador" })
   } | null>(null);
   // Local filtering is shared with the previous server-side listing logic.
   // Search, sorting and pagination now consume zero API/Neon requests.
-  const data = useMemo<Listing | null>(() => {
-    if (!dataset) return null;
-    if (mode === "radiador") {
-      const trifasica = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().includes("TRIFAS");
-      const radiatorDataset: DailyDataset = {
-        ...dataset,
-        rows: dataset.rows.filter((row) => trifasica(row.linha_prod)),
-        options: { ...dataset.options, linhas: dataset.options.linhas.filter(trifasica) },
-      };
-      return filterDailyDataset(radiatorDataset, filters, mode);
-    }
-    return filterDailyDataset(dataset, filters, mode);
-  }, [dataset, filters, mode]);
+  const data = useMemo<Listing | null>(
+    () => dataset ? filterDailyDataset(dataset, filters, mode) : null,
+    [dataset, filters, mode],
+  );
   const forceNext = useRef(false);
   const lastSuccessfulRefresh = useRef(0);
   const reload = useCallback(() => setRefresh((v) => v + 1), []);
