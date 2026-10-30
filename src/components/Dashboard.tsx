@@ -60,7 +60,7 @@ export default function Dashboard({ mode }: { mode: "estamparia" | "radiador" })
   const data = useMemo<Listing | null>(() => {
     if (!dataset) return null;
     if (mode === "radiador") {
-      const trifasica = (value: string) => value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toUpperCase().includes("TRIFAS");
+      const trifasica = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().includes("TRIFAS");
       const radiatorDataset: DailyDataset = {
         ...dataset,
         rows: dataset.rows.filter((row) => trifasica(row.linha_prod)),
