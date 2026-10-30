@@ -123,6 +123,13 @@ export default function Dashboard({ mode }: { mode: "estamparia" | "radiador" })
     try { await fetchJson("/api/auth/logout", { method: "POST" }); window.location.assign("/login"); }
     catch (e) { setError((e as Error).message); }
   }
+  async function markNoRadiator(order: Order) {
+    if (mode !== "radiador" || !window.confirm(`Confirmar que a OP ${order.op_pai}, em ${dateLabel(order.data_inicial)}, não necessita de radiador? A programação será finalizada sem alterar as quantidades.`)) return;
+    try {
+      await fetchJson("/api/radiador/sem-necessidade", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ programacaoIds: order.programacoes.map((p) => p.id) }) });
+      success("Programação finalizada: não necessita de radiador.");
+    } catch (e) { setError((e as Error).message); }
+  }
   function success(message: string) {
     setNotice(message);
     forceNext.current = true;
@@ -416,6 +423,7 @@ export default function Dashboard({ mode }: { mode: "estamparia" | "radiador" })
                 mode={mode}
                 items={data.items}
                 onAction={(order, mode, schedule) => setEditing({ order, mode, schedule })}
+                onNoNeed={markNoRadiator}
               />
             </div>
           ) : (
@@ -426,6 +434,7 @@ export default function Dashboard({ mode }: { mode: "estamparia" | "radiador" })
                   key={`${order.id}:${order.data_inicial}`}
                   order={order}
                   onAction={(order, mode, schedule) => setEditing({ order, mode, schedule })}
+                  onNoNeed={markNoRadiator}
                 />
               ))}
             </div>
