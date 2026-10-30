@@ -165,7 +165,7 @@ export default function OrderCard({
         <button className="secondary" onClick={() => onAction(order, "corrigir", firstSchedule)}>
           <Pencil size={15} /> Editar
         </button>
-        {mode === "radiador" && !order.programacoes.every((p) => p.radiador_nao_necessario) && <button className="secondary" onClick={() => onNoNeed?.(order)}><CheckCircle2 size={15}/> Não necessita de radiador</button>
+        {mode === "radiador" && !order.programacoes.every((p) => p.radiador_nao_necessario) && <button className="secondary" onClick={() => onNoNeed?.(order)}><CheckCircle2 size={15}/> Não necessita de radiador</button>}
       </div>
     </article>
   );
