@@ -1,12 +1,12 @@
 "use client";
-import { Pencil, Plus } from "lucide-react";
+import { CheckCircle2, Pencil, Plus } from "lucide-react";
 import { type Order, SECTORS } from "@/lib/types";
 import { dateLabel, numberLabel } from "@/lib/domain";
 import { Badge } from "./OrderCard";
 
 type Action = (order: Order, mode: "adicionar" | "corrigir", schedule?: number) => void;
 
-export default function OrderTable({ items, onAction, mode = "estamparia" }: { items: Order[]; onAction: Action; mode?: "estamparia" | "radiador" }) {
+export default function OrderTable({ items, onAction, onNoNeed, mode = "estamparia" }: { items: Order[]; onAction: Action; onNoNeed?: (order: Order) => void; mode?: "estamparia" | "radiador" }) {
   return (
     <div className="program-table-wrap" role="region" aria-label="Programações diárias de produção" tabIndex={0}>
       <table className="program-table">
@@ -60,6 +60,7 @@ export default function OrderTable({ items, onAction, mode = "estamparia" }: { i
                 })}
                 <td className="sector-col">
                   {(() => {
+                    if (mode === "radiador" && order.programacoes.every((p) => p.radiador_nao_necessario)) return <strong>Não necessita de radiador</strong>;
                     const produced = order.programacoes.reduce((sum,p) => sum + (p.radiador?.qtd_apontada || 0),0);
                     return <><span className="table-progress-label"><strong>{numberLabel(produced)}</strong> / {numberLabel(order.qtd_programada)}</span>
                       <span className="table-progress-track radiator-track" aria-label={`Radiador: ${produced} de ${order.qtd_programada}`}><span style={{ width: `${order.qtd_programada ? Math.min(100, produced / order.qtd_programada * 100) : 0}%` }} /></span></>;
@@ -70,6 +71,7 @@ export default function OrderTable({ items, onAction, mode = "estamparia" }: { i
                   <div className="table-actions">
                     <button className="primary" onClick={() => onAction(order, "adicionar", first)} aria-label={`Apontar OP ${order.op_pai} em ${dateLabel(order.data_inicial)}`} title="Apontar nesta data"><Plus size={15} /> Apontar</button>
                     <button className="secondary" onClick={() => onAction(order, "corrigir", first)} aria-label={`Editar OP ${order.op_pai} em ${dateLabel(order.data_inicial)}`} title="Editar nesta data"><Pencil size={15} /></button>
+                    {mode === "radiador" && !order.programacoes.every((p) => p.radiador_nao_necessario) && <button className="secondary" onClick={() => onNoNeed?.(order)} title="Finalizar sem necessidade de radiador"><CheckCircle2 size={15}/> Não necessita</button>}
                   </div>
                 </td>
               </tr>
