@@ -1,7 +1,7 @@
 import "server-only";
 import { db, ApiError } from "./server";
 import { createRequestCache } from "./request-cache";
-import { dailyDataset, dailyListing, type StoredAllocation, type StoredRadiatorAllocation, type StoredOrder, type StoredSchedule } from "./daily-listing";
+import { dailyDataset, dailyListing, type StoredAllocation, type StoredRadiatorAllocation, type StoredRadiatorNoNeed, type StoredOrder, type StoredSchedule } from "./daily-listing";
 import { manausDate } from "./domain";
 import { type DailyDataset, type Filters, type Listing } from "./types";
 
@@ -10,6 +10,7 @@ type Snapshot = {
   schedules: StoredSchedule[];
   allocations: StoredAllocation[];
   radiatorAllocations: StoredRadiatorAllocation[];
+  radiatorNoNeed: StoredRadiatorNoNeed[];
   revision: number;
   lastImport: Listing["ultima_importacao"];
 };
@@ -29,6 +30,8 @@ SELECT
     FROM (SELECT programacao_id, subsetor_id, quantidade, versao FROM public.est_alocacoes) a), '[]'::jsonb) AS allocations,
   COALESCE((SELECT jsonb_agg(to_jsonb(a) ORDER BY a.programacao_id)
     FROM (SELECT programacao_id, quantidade, versao FROM public.rad_alocacoes) a), '[]'::jsonb) AS "radiatorAllocations",
+  COALESCE((SELECT jsonb_agg(to_jsonb(n) ORDER BY n.programacao_id)
+    FROM (SELECT programacao_id FROM public.rad_sem_necessidade) n), '[]'::jsonb) AS "radiatorNoNeed",
   (SELECT jsonb_build_object('nome_arquivo', nome_arquivo, 'realizado_em', realizado_em)
    FROM public.est_importacoes ORDER BY id DESC LIMIT 1) AS "lastImport"`;
 
@@ -57,7 +60,7 @@ export async function getDailyListing(filters: Filters, force = false) {
   const snapshot = await snapshotCache.get(force);
   return dailyListing(
     snapshot.orders, snapshot.schedules, snapshot.allocations,
-    filters, manausDate(), snapshot.revision, snapshot.lastImport, snapshot.radiatorAllocations,
+    filters, manausDate(), snapshot.revision, snapshot.lastImport, snapshot.radiatorAllocations, snapshot.radiatorNoNeed,
   );
 }
 
