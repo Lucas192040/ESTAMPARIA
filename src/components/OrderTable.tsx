@@ -18,7 +18,7 @@ export default function OrderTable({ items, onAction, mode = "estamparia" }: { i
             <th scope="col">Linha / potência</th>
             <th scope="col" className="num-col">Qtd. OP</th>
             <th scope="col" className="num-col">Prog. dia</th>
-            {SECTORS.map((s) => <th scope="col" key={s} className="sector-col">{s}</th>)}
+            {mode === "estamparia" && SECTORS.map((s) => <th scope="col" key={s} className="sector-col">{s}</th>)}
             <th scope="col" className="sector-col">RADIADOR</th>
             <th scope="col">Situação {mode === "radiador" ? "Radiador" : "Estamparia"}</th>
             <th scope="col" className="actions-col">Ações</th>
@@ -45,7 +45,7 @@ export default function OrderTable({ items, onAction, mode = "estamparia" }: { i
                 </td>
                 <td className="num-col muted">{numberLabel(order.qtd_op_pai)}</td>
                 <td className="num-col"><strong className="table-scheduled">{numberLabel(order.qtd_programada)}</strong></td>
-                {SECTORS.map((sector, i) => {
+                {mode === "estamparia" && SECTORS.map((sector, i) => {
                   const produced = order.programacoes.reduce((total, p) =>
                     total + (p.setores.find((s) => s.subsetor_id === i + 1)?.qtd_apontada || 0), 0);
                   const percentage = order.qtd_programada ? produced / order.qtd_programada * 100 : 0;
