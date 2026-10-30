@@ -7,6 +7,7 @@ export type StoredOrder = Pick<Order,
   "nome_cliente" | "qtd_op_pai">;
 export type StoredSchedule = Omit<Schedule, "setores" | "radiador"> & { op_id: number };
 export type StoredRadiatorAllocation = { programacao_id: number; quantidade: number; versao: number };
+export type StoredRadiatorNoNeed = { programacao_id: number };
 export type StoredAllocation = { programacao_id: number; subsetor_id: number; quantidade: number; versao: number };
 type ImportInfo = Listing["ultima_importacao"];
 const PAGE_SIZE = 12;
@@ -20,11 +21,13 @@ export function dailyDataset(
   revision: number,
   lastImport: ImportInfo,
   radiatorAllocations: StoredRadiatorAllocation[] = [],
+  radiatorNoNeed: StoredRadiatorNoNeed[] = [],
 ): DailyDataset {
   const orderById = new Map(orders.map((o) => [Number(o.id), o]));
   const radiatorBySchedule = new Map(radiatorAllocations.map((a) => [Number(a.programacao_id), {
     qtd_apontada: Number(a.quantidade), versao: Number(a.versao),
   }]));
+  const noNeedIds = new Set(radiatorNoNeed.map((a) => Number(a.programacao_id)));
   const allocationBySchedule = new Map<number, Sector[]>();
   for (const a of allocations) {
     const id = Number(a.programacao_id);
@@ -65,6 +68,7 @@ export function dailyDataset(
       serie_final: Number(raw.serie_final),
       setores: allocationBySchedule.get(Number(raw.id)) || [],
       radiador: radiatorBySchedule.get(Number(raw.id)) || { qtd_apontada: 0, versao: 0 },
+      radiador_nao_necessario: noNeedIds.has(Number(raw.id)),
     };
     row.programacoes.push(schedule);
     row.qtd_programada += schedule.qtd_programada;
@@ -93,9 +97,9 @@ export function dailyDataset(
 /** Radiador is independent: its status never participates in Estamparia completion. */
 export function radiatorStatus(schedules: Schedule[], today: string): Status {
   if (!schedules.length) return "NAO_INICIADA";
-  if (schedules.every((p) => (p.radiador?.qtd_apontada || 0) === p.qtd_programada)) return "CONCLUIDA";
-  if (schedules.some((p) => p.data_programada < today && (p.radiador?.qtd_apontada || 0) < p.qtd_programada)) return "ATRASADA";
-  if (schedules.every((p) => (p.radiador?.qtd_apontada || 0) === 0)) return "NAO_INICIADA";
+  if (schedules.every((p) => p.radiador_nao_necessario || (p.radiador?.qtd_apontada || 0) === p.qtd_programada)) return "CONCLUIDA";
+  if (schedules.some((p) => !p.radiador_nao_necessario && p.data_programada < today && (p.radiador?.qtd_apontada || 0) < p.qtd_programada)) return "ATRASADA";
+  if (schedules.every((p) => p.radiador_nao_necessario || (p.radiador?.qtd_apontada || 0) === 0)) return "NAO_INICIADA";
   return "EM_ANDAMENTO";
 }
 
@@ -177,9 +181,10 @@ export function dailyListing(
   revision: number,
   lastImport: ImportInfo,
   radiatorAllocations: StoredRadiatorAllocation[] = [],
+  radiatorNoNeed: StoredRadiatorNoNeed[] = [],
 ): Listing {
   return filterDailyDataset(
-    dailyDataset(orders, schedules, allocations, today, revision, lastImport, radiatorAllocations),
+    dailyDataset(orders, schedules, allocations, today, revision, lastImport, radiatorAllocations, radiatorNoNeed),
     filters,
   );
 }
