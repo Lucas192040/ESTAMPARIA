@@ -19,7 +19,7 @@ export default function OrderTable({ items, onAction, onNoNeed, mode = "estampar
             <th scope="col" className="num-col">Qtd. OP</th>
             <th scope="col" className="num-col">Prog. dia</th>
             {mode === "estamparia" && SECTORS.map((s) => <th scope="col" key={s} className="sector-col">{s}</th>)}
-            <th scope="col" className="sector-col">RADIADOR</th>
+            {mode === "radiador" && <th scope="col" className="sector-col">RADIADOR</th>}
             <th scope="col">Situação {mode === "radiador" ? "Radiador" : "Estamparia"}</th>
             <th scope="col" className="actions-col">Ações</th>
           </tr>
@@ -58,14 +58,14 @@ export default function OrderTable({ items, onAction, onNoNeed, mode = "estampar
                     </td>
                   );
                 })}
-                <td className="sector-col">
+                {mode === "radiador" && <td className="sector-col">
                   {(() => {
                     if (mode === "radiador" && order.programacoes.every((p) => p.radiador_nao_necessario)) return <strong>Não necessita de radiador</strong>;
                     const produced = order.programacoes.reduce((sum,p) => sum + (p.radiador?.qtd_apontada || 0),0);
                     return <><span className="table-progress-label"><strong>{numberLabel(produced)}</strong> / {numberLabel(order.qtd_programada)}</span>
                       <span className="table-progress-track radiator-track" aria-label={`Radiador: ${produced} de ${order.qtd_programada}`}><span style={{ width: `${order.qtd_programada ? Math.min(100, produced / order.qtd_programada * 100) : 0}%` }} /></span></>;
                   })()}
-                </td>
+                </td>}
                 <td><Badge status={order.situacao} /></td>
                 <td>
                   <div className="table-actions">
