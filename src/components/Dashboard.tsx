@@ -240,14 +240,13 @@ export default function Dashboard({ mode }: { mode: "estamparia" | "radiador" })
           ).map(({ status, icon: Icon, label, caption, color }) => (
             <button
               key={status}
-              className={`summary ${filters.situacao === status ? "selected" : ""}`}
+              className={`summary ${filters.situacao === status ? "selected" : ""} ${status === "ATRASADA" && data && data.counts.ATRASADA > 0 ? "summary-alert" : ""}`}
               onClick={() =>
                 update("situacao", filters.situacao === status ? "" : status)
               }
             >
               <div className="summary-top">
                 <span>{label}</span>
-                {status === "ATRASADA" && data && data.counts.ATRASADA > 0 && <span className="late-alert-light" role="img" aria-label="Existem programações atrasadas" title="Existem programações atrasadas" />}
                 <Icon size={18} className={color} />
               </div>
               <strong>
