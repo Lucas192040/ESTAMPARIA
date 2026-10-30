@@ -134,7 +134,7 @@ export default function OrderCard({
           PROGRESSO DE {dateLabel(order.data_inicial)}
           <span>Produzido / programado no dia</span>
         </div>
-        {SECTORS.map((_, i) => (
+        {mode === "estamparia" && SECTORS.map((_, i) => (
           <Progress
             key={i}
             index={i}
@@ -145,7 +145,7 @@ export default function OrderCard({
             )}
           />
         ))}
-        <div className="radiator-progress">
+        <div className={mode === "radiador" ? "radiator-progress" : "radiator-progress"}>
           <div className="radiator-heading">RADIADOR <small>(controle independente)</small></div>
           {(() => { const produced = order.programacoes.reduce((total,p) => total + (p.radiador?.qtd_apontada || 0), 0);
             const percent = order.qtd_programada ? produced / order.qtd_programada * 100 : 0;
