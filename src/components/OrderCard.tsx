@@ -11,6 +11,7 @@ import {
   Check,
   Play,
   AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import {
   type Order,
@@ -86,9 +87,11 @@ export default function OrderCard({
   order,
   onAction,
   mode = "estamparia",
+  onNoNeed,
 }: {
   order: Order;
   mode?: "estamparia" | "radiador";
+  onNoNeed?: (order: Order) => void;
   onAction: (
     o: Order,
     mode: "adicionar" | "corrigir",
@@ -149,6 +152,7 @@ export default function OrderCard({
           <div className="radiator-heading">RADIADOR <small>(controle independente)</small></div>
           {(() => { const produced = order.programacoes.reduce((total,p) => total + (p.radiador?.qtd_apontada || 0), 0);
             const percent = order.qtd_programada ? produced / order.qtd_programada * 100 : 0;
+            if (mode === "radiador" && order.programacoes.every((p) => p.radiador_nao_necessario)) return <strong>Não necessita de radiador</strong>;
             return <><div className="radiator-progress-numbers"><strong>{numberLabel(produced)} / {numberLabel(order.qtd_programada)}</strong><span>{Math.round(percent)}% · {numberLabel(order.qtd_programada - produced)} pendentes</span></div>
               <div className="table-progress-track radiator-track"><span style={{width: `${Math.min(100,percent)}%`}}/></div></>;
           })()}
@@ -161,6 +165,7 @@ export default function OrderCard({
         <button className="secondary" onClick={() => onAction(order, "corrigir", firstSchedule)}>
           <Pencil size={15} /> Editar
         </button>
+        {mode === "radiador" && !order.programacoes.every((p) => p.radiador_nao_necessario) && <button className="secondary" onClick={() => onNoNeed?.(order)}><CheckCircle2 size={15}/> Não necessita de radiador</button>
       </div>
     </article>
   );
