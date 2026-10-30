@@ -69,6 +69,6 @@ export async function getDailyDataset(force = false): Promise<DailyDataset> {
   const snapshot = await snapshotCache.get(force);
   return dailyDataset(
     snapshot.orders, snapshot.schedules, snapshot.allocations,
-    manausDate(), snapshot.revision, snapshot.lastImport, snapshot.radiatorAllocations,
+    manausDate(), snapshot.revision, snapshot.lastImport, snapshot.radiatorAllocations, snapshot.radiatorNoNeed,
   );
 }
