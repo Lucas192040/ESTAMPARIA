@@ -31,6 +31,7 @@ export type Schedule = {
   serie_final: number;
   setores: Sector[];
   radiador?: { qtd_apontada: number; versao: number };
+  radiador_nao_necessario?: boolean;
 };
 export type Order = {
   id: number;
