@@ -171,6 +171,7 @@ export default function Dashboard({ mode }: { mode: "estamparia" | "radiador" })
             onChange={(e) => update("q", e.target.value)}
           />
         </div>
+        {mode === "estamparia" && <a href="/ferragem" className="secondary settings-button"><Factory size={17}/><span>Ferragem</span></a>}
         {mode === "estamparia" && <button className="secondary settings-button" onClick={() => setSettings(true)}>
           <Settings2 size={17} /><span>Configurações</span>
         </button>}
