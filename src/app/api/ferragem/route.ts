@@ -48,5 +48,25 @@ export async function POST(req:Request){
  return answer({ok:true,linhas:parsed.rows.length,importacao:importId});}catch(e){return failure(e);}
 }
 export async function PATCH(req:Request){
- try{await requireRole("ferragem");await guard(req,"write");const schema=z.object({programacao_id:z.number().int().positive(),viga_superior:z.number().int().min(0).max(2147483647),viga_inferior:z.number().int().min(0).max(2147483647),dobradeira_superior:z.number().int().min(0).max(2147483647),dobradeira_inferior:z.number().int().min(0).max(2147483647)});const p=schema.parse(JSON.parse((await limitedBody(req,4096)).toString("utf8")));const q=await ferragemDb().query(`INSERT INTO public.fer_producao(programacao_id,viga_superior,viga_inferior,dobradeira_superior,dobradeira_inferior,atualizado_em) SELECT p.id,$2,$3,$4,$5,now() FROM public.fer_programacoes p WHERE p.id=$1 AND $2<=p.qtd_programada AND $3<=p.qtd_programada AND $4<=p.qtd_programada AND $5<=p.qtd_programada ON CONFLICT(programacao_id) DO UPDATE SET viga_superior=EXCLUDED.viga_superior,viga_inferior=EXCLUDED.viga_inferior,dobradeira_superior=EXCLUDED.dobradeira_superior,dobradeira_inferior=EXCLUDED.dobradeira_inferior,atualizado_em=now() RETURNING *`,[p.programacao_id,p.viga_superior,p.viga_inferior,p.dobradeira_superior,p.dobradeira_inferior]);if(!q.rowCount)throw new ApiError("Cada apontamento deve ser menor ou igual à quantidade programada da OP/data.",422);return answer({ok:true,production:q.rows[0]});}catch(e){return failure(e);}
+ try{
+  await requireRole("ferragem");await guard(req,"write");
+  const schema=z.object({programacao_id:z.number().int().positive(),viga_superior:z.number().int().min(0).max(2147483647),viga_inferior:z.number().int().min(0).max(2147483647),dobradeira_superior:z.number().int().min(0).max(2147483647),dobradeira_inferior:z.number().int().min(0).max(2147483647)});
+  const p=schema.parse(JSON.parse((await limitedBody(req,4096)).toString("utf8")));
+  const client=await ferragemDb().connect();
+  let production:any;
+  try{
+   await client.query("BEGIN");
+   const q=await client.query(`INSERT INTO public.fer_producao(programacao_id,viga_superior,viga_inferior,dobradeira_superior,dobradeira_inferior,atualizado_em)
+    SELECT p.id,$2,$3,$4,$5,now() FROM public.fer_programacoes p
+    WHERE p.id=$1 AND $2<=p.qtd_programada AND $3<=p.qtd_programada AND $4<=p.qtd_programada AND $5<=p.qtd_programada
+    ON CONFLICT(programacao_id) DO UPDATE SET viga_superior=EXCLUDED.viga_superior,viga_inferior=EXCLUDED.viga_inferior,dobradeira_superior=EXCLUDED.dobradeira_superior,dobradeira_inferior=EXCLUDED.dobradeira_inferior,atualizado_em=now() RETURNING *`,
+    [p.programacao_id,p.viga_superior,p.viga_inferior,p.dobradeira_superior,p.dobradeira_inferior]);
+   if(!q.rowCount)throw new ApiError("Cada apontamento deve ser menor ou igual à quantidade programada da OP/data.",422);
+   production=q.rows[0];
+   await client.query(`INSERT INTO public.fer_apontamentos_historico(programacao_id,viga_superior,viga_inferior,dobradeira_superior,dobradeira_inferior,registrado_em)
+    VALUES($1,$2,$3,$4,$5,now())`,[p.programacao_id,p.viga_superior,p.viga_inferior,p.dobradeira_superior,p.dobradeira_inferior]);
+   await client.query("COMMIT");
+  }catch(e){await client.query("ROLLBACK");throw e;}finally{client.release();}
+  return answer({ok:true,production});
+ }catch(e){return failure(e);}
 }
