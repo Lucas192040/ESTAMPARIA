@@ -26,7 +26,7 @@ function parse(buffer:Buffer,filename:string){
  for(let i=header+1;i<rows.length;i++){const r=rows[i];if(r.every((v:any)=>v==null||txt(v)===""))continue;try{
  const c=ix.map((j:number)=>r[j]);const op=txt(c[0]),parent=txt(c[1]);if(!op||!parent)throw Error("Nro OP e OP-Pai são obrigatórios.");
  const qty=integer(c[8],"Qtd.Programada",1),si=integer(c[9],"Série Inicial"),sf=integer(c[10],"Série Final");if(sf-si+1!==qty)throw Error("Intervalo de séries não confere com Qtd.Programada.");
- const potency=Number(txt(c[15]).replace(",", "."));if(!Number.isFinite(potency)||potency<0)throw Error("Potência PA inválida.");
+ const potencyText=txt(c[15]).replace(/\s*kva\b/i,"").replace(/\s*\(monof[aá]sico\)\s*/i,"").replace(",", ".").trim();const potency=Number(potencyText);if(!potencyText||!Number.isFinite(potency)||potency<0)throw Error("Potência PA inválida.");
  out.push({nro_op:op,op_pai:parent,cod_cli:txt(c[2]),nome_cliente:txt(c[3]),status_op:txt(c[4]),data_programada:excelDate(c[5],!!wb.Workbook?.WBProps?.date1904),atividade:txt(c[6]),descr_atividade:txt(c[7])||"FERRAGEM",qtd_programada:qty,serie_inicial:si,serie_final:sf,dia_semana:txt(c[11]),produto:txt(c[12]),descr_produto:txt(c[13]),referencia_prod:txt(c[14]),potencia_pa:potency,linha_prod:txt(c[16]),qtd_op:integer(c[17],"Qtd.OP"),qtd_op_pai:integer(c[18],"Qtd.OP-Pai"),qtd_apontada_erp:integer(c[19],"Qtd.Apontada")});
  }catch(e){throw Error("Linha "+(i+1)+": "+(e as Error).message);}}
  if(out.length>10000)throw Error("A planilha excede o limite de 10.000 programações.");if(!out.length)throw Error("A planilha não contém programações.");
