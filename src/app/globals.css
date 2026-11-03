@@ -1983,3 +1983,22 @@ tr:last-child td {
  .master-chart-row>strong{grid-column:1/-1!important}
  .master-process-title{align-items:center!important}
 }
+
+
+/* MASTER — monitoramento do turno pelo último salvamento */
+.master-shifts{margin:22px 0 28px;padding:19px 20px;border:1px solid #2c4052;border-radius:12px;background:linear-gradient(145deg,#142331,#101922)}
+.master-shifts-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:17px}
+.master-shifts-heading h2{margin:0;font-size:19px;color:#f0f5fa}
+.master-shifts-heading p{margin:6px 0 0;font-size:10px;color:#91a8bd}
+.master-live-label{font-size:9px;letter-spacing:.8px;color:#68dcb5;font-weight:800}
+.master-shift-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.master-shift-card{display:flex;flex-direction:column;gap:8px;min-width:0;padding:15px;border:1px solid #304657;border-radius:9px;background:#101b26}
+.master-shift-name{font-size:11px;color:#a8bbcd;font-weight:700}
+.master-shift-card>strong{font-size:20px;color:#dce8f3}
+.master-shift-card>strong.master-shift-on{color:#64dfb6}
+.master-shift-card>strong.master-shift-off{color:#f2bd69}
+.master-shift-datetime{display:flex;align-items:baseline;gap:9px}
+.master-shift-datetime b{font-size:25px;color:#fff;font-variant-numeric:tabular-nums}
+.master-shift-datetime span{font-size:11px;color:#91a8bd}
+.master-shift-card small{font-size:9px;color:#7f96aa}
+@media(max-width:700px){.master-shifts-heading{flex-direction:column}.master-shift-grid{grid-template-columns:1fr}}
