@@ -1842,3 +1842,22 @@ tr:last-child td {
 @media(max-width:1250px){.master-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.master-header{position:static;align-items:flex-start;flex-wrap:wrap;padding:13px 16px}.master-actions{width:100%;justify-content:flex-end;flex-wrap:wrap}.master-readonly{margin-right:auto}.master-content{padding:20px 14px}.master-intro{align-items:flex-start;flex-direction:column}.master-security{white-space:normal}.master-overview{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.master-overview>div{padding:12px}.master-overview strong{font-size:23px}.master-grid{grid-template-columns:1fr}.master-process{margin:24px 0}.master-footer{flex-direction:column}}
 @media(prefers-reduced-motion:reduce){.master-card{scroll-behavior:auto}}
+
+
+/* MASTER: três indicadores de programado x realizado */
+.master-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:22px 0 18px}
+.master-metric{min-width:0;padding:17px 18px 14px;border:1px solid #2d4355;border-radius:11px;background:linear-gradient(145deg,#172633,#101922);box-shadow:0 5px 18px #0002}
+.master-metric-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:17px}
+.master-metric-head>span:first-child{font-size:15px;font-weight:800;color:#f0f6fc}
+.master-metric-tag{font-size:8px;letter-spacing:1px;font-weight:800;color:#75cdb7;border:1px solid #285d50;border-radius:20px;padding:5px 8px}
+.master-metric-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.master-metric-values>div{min-width:0;display:flex;flex-direction:column;gap:6px}
+.master-metric-values small{font-size:10px;color:#92a7ba}
+.master-metric-values strong{font-size:clamp(19px,2vw,27px);line-height:1.1;color:#f3f7fb;font-variant-numeric:tabular-nums}
+.master-metric-values .master-done{color:#62dfb5}
+.master-metric-values .master-pending{color:#f3c36c}
+.master-metric-track{height:8px;margin-top:18px;overflow:hidden;border-radius:10px;background:#263747}
+.master-metric-track span{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,#238d79,#63e0b5);transition:width .25s ease}
+.master-metric-foot{display:flex;justify-content:space-between;gap:8px;margin-top:8px;color:#8299ad;font-size:9px}
+@media(max-width:900px){.master-metrics{grid-template-columns:1fr}}
+@media(max-width:500px){.master-metric{padding:14px}.master-metric-values{gap:5px}.master-metric-values strong{font-size:19px}.master-metric-values small{font-size:9px}}
