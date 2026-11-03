@@ -3,7 +3,7 @@ import { createHmac, createHash, randomBytes, timingSafeEqual } from "node:crypt
 import { cookies } from "next/headers";
 import { ApiError } from "./server";
 
-export type Role = "estamparia" | "radiador" | "ferragem";
+export type Role = "estamparia" | "radiador" | "ferragem" | "master";
 const COOKIE = "itam_sector_session";
 const MAX_AGE = 12 * 60 * 60;
 
@@ -17,10 +17,11 @@ function signature(value: string) {
   return createHmac("sha256", secret()).update(value).digest("base64url");
 }
 export function verifyCredentials(role: string, password: string): role is Role {
-  if (role !== "estamparia" && role !== "radiador" && role !== "ferragem") return false;
-  const expected = role === "estamparia"
-    ? process.env.ESTAMPARIA_PASSWORD || "estamp123"
+  if (role !== "estamparia" && role !== "radiador" && role !== "ferragem" && role !== "master") return false;
+  const expected = role === "master" ? process.env.MASTER_PASSWORD
+    : role === "estamparia" ? process.env.ESTAMPARIA_PASSWORD || "estamp123"
     : role === "radiador" ? process.env.RADIADOR_PASSWORD || "rad123" : process.env.FERRAGEM_PASSWORD || process.env.ESTAMPARIA_PASSWORD || "estamp123";
+  if (!expected) return false;
   // Fixed-sized HMAC prevents timing discrepancies for distinct password lengths.
   return timingSafeEqual(
     createHmac("sha256", secret()).update(password).digest(),
@@ -42,7 +43,7 @@ export function readSession(token?: string): Role | null {
     if (!data || typeof data !== "object") return null;
     const value = data as { role?: string; expires?: number };
     if (typeof value.expires !== "number" || !Number.isFinite(value.expires) || value.expires <= Date.now()) return null;
-    return value.role === "estamparia" || value.role === "radiador" || value.role === "ferragem" ? value.role : null;
+    return value.role === "estamparia" || value.role === "radiador" || value.role === "ferragem" || value.role === "master" ? value.role : null;
   } catch { return null; }
 }
 export async function currentRole(): Promise<Role | null> {
