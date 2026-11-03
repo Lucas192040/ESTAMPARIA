@@ -1755,3 +1755,33 @@ tr:last-child td {
 .ferragem-shell .footer { margin-top:26px; }
 @media(max-width:760px) { .ferragem-components { grid-template-columns:repeat(2,minmax(0,1fr)); } .ferragem-card-foot { align-items:flex-start; flex-direction:column; } }
 @media(max-width:500px) { .ferragem-header,.ferragem-intro { align-items:flex-start; flex-direction:column; } .ferragem-header-actions { width:100%; } .ferragem-components { grid-template-columns:1fr 1fr; } .ferragem-import { align-items:stretch; } .ferragem-file { max-width:none; } .ferragem-card { padding:12px; } }
+
+
+/* Ferragem — tabela e cabeçalho alinhados ao dashboard principal. */
+.ferragem-program-table {
+  min-width: 1480px;
+}
+.ferragem-program-table .sector-col {
+  min-width: 112px;
+}
+.ferragem-program-table .table-progress-label {
+  display: block;
+  white-space: nowrap;
+  font-size: 10px;
+  color: #96a9bd;
+}
+.ferragem-program-table .table-progress-label strong {
+  color: #deebf8;
+  font-weight: 600;
+}
+.ferragem-program-table .table-progress-track {
+  margin-top: 8px;
+  height: 4px;
+}
+.ferragem-program-table .table-actions {
+  min-width: 105px;
+}
+@media (max-width: 900px) {
+  .topbar { gap: 14px; padding-left: 18px; padding-right: 18px; }
+  .topbar .brand { min-width: 190px; }
+}
