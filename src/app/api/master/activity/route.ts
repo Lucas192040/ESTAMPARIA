@@ -16,7 +16,7 @@ export async function GET(req: Request) {
             (SELECT MAX(marcado_em) FROM public.rad_sem_necessidade)
           ) AS radiador
       `),
-      ferragemDb().query("SELECT MAX(atualizado_em) AS ferragem FROM public.fer_producao")
+      ferragemDb().query("SELECT MAX(registrado_em) AS ferragem FROM public.fer_apontamentos_historico")
     ]);
     return answer({
       estamparia: main.rows[0]?.estamparia ?? null,
