@@ -33,7 +33,7 @@ function parse(buffer:Buffer,filename:string){
  return {name,rows:out};
 }
 export async function GET(req:Request){
- try{await requireRole("ferragem");await guard(req,"read");const q=await ferragemDb().query(`SELECT p.id,p.nro_op,p.op_pai,p.cod_cli,p.nome_cliente,p.status_op,p.data_programada,p.qtd_programada,p.serie_inicial,p.serie_final,p.produto,p.descr_produto,p.referencia_prod,p.potencia_pa,p.linha_prod,p.qtd_op,p.qtd_op_pai,p.qtd_apontada_erp,COALESCE(f.viga_superior,0) viga_superior,COALESCE(f.viga_inferior,0) viga_inferior,COALESCE(f.dobradeira_superior,0) dobradeira_superior,COALESCE(f.dobradeira_inferior,0) dobradeira_inferior FROM public.fer_programacoes p LEFT JOIN public.fer_producao f ON f.programacao_id=p.id ORDER BY p.data_programada,p.op_pai,p.nro_op`);
+ try{const role=await requireRole();if(role!=="ferragem"&&role!=="master")throw new ApiError("Acesso restrito à Ferragem.",403);await guard(req,"read");const q=await ferragemDb().query(`SELECT p.id,p.nro_op,p.op_pai,p.cod_cli,p.nome_cliente,p.status_op,p.data_programada,p.qtd_programada,p.serie_inicial,p.serie_final,p.produto,p.descr_produto,p.referencia_prod,p.potencia_pa,p.linha_prod,p.qtd_op,p.qtd_op_pai,p.qtd_apontada_erp,COALESCE(f.viga_superior,0) viga_superior,COALESCE(f.viga_inferior,0) viga_inferior,COALESCE(f.dobradeira_superior,0) dobradeira_superior,COALESCE(f.dobradeira_inferior,0) dobradeira_inferior FROM public.fer_programacoes p LEFT JOIN public.fer_producao f ON f.programacao_id=p.id ORDER BY p.data_programada,p.op_pai,p.nro_op`);
  return answer({rows:q.rows});}catch(e){return failure(e);}
 }
 export async function POST(req:Request){
