@@ -3,7 +3,7 @@ import { useState, type FormEvent } from "react";
 import { LockKeyhole, Factory, ArrowRight } from "lucide-react";
 import { fetchJson } from "@/lib/client";
 export default function LoginScreen() {
-  const [role, setRole] = useState<"estamparia" | "radiador">("estamparia");
+  const [role, setRole] = useState<"estamparia" | "radiador" | "ferragem">("estamparia");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -27,6 +27,7 @@ export default function LoginScreen() {
       <fieldset className="login-sectors"><legend>Setor de acesso</legend>
         <label className={role === "estamparia" ? "active" : ""}><input type="radio" name="role" value="estamparia" checked={role === "estamparia"} onChange={() => { setRole("estamparia"); setPassword(""); setError(""); }} /> Estamparia</label>
         <label className={role === "radiador" ? "active" : ""}><input type="radio" name="role" value="radiador" checked={role === "radiador"} onChange={() => { setRole("radiador"); setPassword(""); setError(""); }} /> Radiador</label>
+        <label className={role === "ferragem" ? "active" : ""}><input type="radio" name="role" value="ferragem" checked={role === "ferragem"} onChange={() => { setRole("ferragem"); setPassword(""); setError(""); }} /> Ferragem</label>
       </fieldset>
       <label className="login-password"><span><LockKeyhole size={15}/> Senha do setor</span>
         <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} maxLength={256} required placeholder="Digite a senha" />
