@@ -2096,3 +2096,19 @@ tr:last-child td {
 .master-sector-last>strong{font-size:13px;color:#e8f2fa;line-height:1.5}
 @media(max-width:1200px){.master-sector-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.master-sector-overview{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.master-sector-overview>div{border:0;padding:5px}.master-sector-cards{grid-template-columns:1fr}.master-sector-info{grid-template-columns:1fr}.master-sector-last{border:0;border-top:1px solid #304657;padding:15px 0 0}.master-sector-shift-times{grid-template-columns:1fr}.master-sector-shift-times article{border:0;padding:4px 0}}
+
+/* Seletor de mês MASTER — navegação rápida */
+.master-month-picker{display:flex;align-items:flex-end;justify-content:flex-end;gap:9px;flex-wrap:wrap;min-width:min(100%,650px)}
+.master-month-control{display:flex;flex-direction:column;gap:5px;min-width:205px}
+.master-month-caption{font-size:9px;letter-spacing:.09em;font-weight:800;color:#8ca8be}
+.master-month-input-wrap{height:44px;display:flex;align-items:center;gap:10px;padding:0 11px;border:1px solid #36566f;border-radius:9px;background:#101d29;color:#f4f8fc;cursor:pointer}
+.master-calendar-icon{font-size:19px;color:#62c8ff}
+.master-month-input-wrap input{min-width:0;width:100%;border:0;outline:0;background:transparent;color:#f4f8fc;font:600 13px inherit;color-scheme:dark;cursor:pointer}
+.master-month-input-wrap input::-webkit-calendar-picker-indicator{opacity:.75;cursor:pointer}
+.master-month-chevron{color:#8faec4;font-size:17px}
+.master-month-picker>button{height:44px;padding:0 13px;border:1px solid #36566f;border-radius:9px;background:#101d29;color:#dce9f5;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;transition:background .15s,border-color .15s}
+.master-month-picker>button:hover{border-color:#40cfa9;background:#15332f}
+.master-month-picker>button.master-month-current{border-color:#167b65;color:#55dfb6;background:#102b2a}
+.master-month-picker>button.master-month-current.active{background:#123a32;border-color:#2fc99c}
+@media(max-width:900px){.master-month-picker{justify-content:flex-start;min-width:0}.master-month-control{flex:1;min-width:180px}}
+@media(max-width:560px){.master-month-picker{display:grid;grid-template-columns:1fr 1fr}.master-month-control{grid-column:1/-1}.master-month-picker>button{padding:0 8px;font-size:10px}}
