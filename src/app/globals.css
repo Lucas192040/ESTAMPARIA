@@ -2002,3 +2002,17 @@ tr:last-child td {
 .master-shift-datetime span{font-size:11px;color:#91a8bd}
 .master-shift-card small{font-size:9px;color:#7f96aa}
 @media(max-width:700px){.master-shifts-heading{flex-direction:column}.master-shift-grid{grid-template-columns:1fr}}
+
+
+/* MASTER — navegação lateral por processo */
+.master-layout{display:grid;grid-template-columns:190px minmax(0,1fr);align-items:start;gap:22px;max-width:2040px;margin:0 auto;padding:0 clamp(16px,2vw,30px)}
+.master-layout>.master-content{width:100%;max-width:none;min-width:0;margin:0;padding:28px 0 18px}
+.master-side-nav{position:sticky;top:112px;display:grid;gap:7px;padding:13px 10px;margin-top:34px;border:1px solid #263b4d;border-radius:12px;background:linear-gradient(160deg,#121f2b,#0d151e)}
+.master-side-label{padding:5px 10px 9px;color:#6f91a9;font-size:9px;font-weight:800;letter-spacing:1.4px}
+.master-side-nav button{display:flex;align-items:center;gap:11px;width:100%;min-height:46px;padding:9px 11px;border:1px solid transparent;border-radius:8px;background:transparent;color:#a9bbcd;text-align:left;font-size:12px;font-weight:700}
+.master-side-nav button:hover{background:#172a39;color:#eaf5ff}
+.master-side-nav button.active{border-color:#286653;background:linear-gradient(100deg,#123a30,#142c2b);color:#76e3bf;box-shadow:inset 3px 0 #39c99a}
+.master-nav-icon{display:grid;place-items:center;width:25px;height:25px;border:1px solid #355166;border-radius:6px;color:#7fb9d6;font-size:9px;font-weight:900}
+.master-side-nav button.active .master-nav-icon{border-color:#347d67;color:#7ce8c2;background:#153c32}
+.master-shift-grid-single{grid-template-columns:minmax(240px,420px)}
+@media(max-width:850px){.master-layout{grid-template-columns:1fr;gap:0;padding:0 14px}.master-side-nav{position:static;display:flex;align-items:center;gap:6px;overflow-x:auto;margin:14px 0 0;padding:8px}.master-side-label{display:none}.master-side-nav button{flex:0 0 auto;width:auto;min-height:40px;padding:7px 10px}.master-side-nav button span:last-child{white-space:nowrap}.master-layout>.master-content{padding:16px 0}.master-shift-grid-single{grid-template-columns:1fr}}
