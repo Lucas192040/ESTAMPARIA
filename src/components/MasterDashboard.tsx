@@ -8,7 +8,7 @@ type P="all"|"today"|"month";
 type View="overview"|"estamparia"|"radiador"|"ferragem";
 type Activity={estamparia:string|null;radiador:string|null;ferragem:string|null;timezone:string};
 type ShiftDay={date:string;first:number;second:number;total:number};
-type SectorMetric={name:string;planned:number;done:number;pending:number;percent:number;id:number};
+type SectorMetric={name:string;planned:number;done:number;pending:number;percent:number;id:number;color:string};
 function EstampariaSectors({rows,activity}:{rows:Order[];activity:string|null}){
  const defs=[{id:1,name:"CORPO",color:"blue"},{id:2,name:"FUNDO",color:"purple"},{id:3,name:"TAMPA",color:"cyan"},{id:4,name:"TAMPA BORDEADA",color:"amber"}];
  const metrics:SectorMetric[]=defs.map(d=>{let planned=0,done=0;for(const order of rows)for(const p of order.programacoes){planned+=Number(p.qtd_programada||0);done+=Number(p.setores.find(s=>s.subsetor_id===d.id)?.qtd_apontada||0)}return {...d,planned,done,pending:Math.max(0,planned-done),percent:planned?Math.min(100,Math.round(done/planned*100)):0}});
