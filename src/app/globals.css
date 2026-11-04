@@ -2112,3 +2112,5 @@ tr:last-child td {
 .master-month-picker>button.master-month-current.active{background:#123a32;border-color:#2fc99c}
 @media(max-width:900px){.master-month-picker{justify-content:flex-start;min-width:0}.master-month-control{flex:1;min-width:180px}}
 @media(max-width:560px){.master-month-picker{display:grid;grid-template-columns:1fr 1fr}.master-month-control{grid-column:1/-1}.master-month-picker>button{padding:0 8px;font-size:10px}}
+
+.master-sector-overdue{display:flex;flex-direction:column;gap:5px;padding:9px 14px;border-left:1px solid #304657;min-width:130px}.master-sector-overdue>span{font-size:10px;font-weight:800;color:#ff8c82;letter-spacing:.5px}.master-sector-overdue>strong{font-size:26px;color:#ff746b;font-variant-numeric:tabular-nums}.master-sector-overdue>small{font-size:9px;color:#a5b9ca}@media(max-width:760px){.master-sector-overdue{border-left:0;border-top:1px solid #304657;padding:12px 5px;grid-column:1/-1}}
