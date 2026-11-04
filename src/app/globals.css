@@ -2016,3 +2016,37 @@ tr:last-child td {
 .master-side-nav button.active .master-nav-icon{border-color:#347d67;color:#7ce8c2;background:#153c32}
 .master-shift-grid-single{grid-template-columns:minmax(240px,420px)}
 @media(max-width:850px){.master-layout{grid-template-columns:1fr;gap:0;padding:0 14px}.master-side-nav{position:static;display:flex;align-items:center;gap:6px;overflow-x:auto;margin:14px 0 0;padding:8px}.master-side-label{display:none}.master-side-nav button{flex:0 0 auto;width:auto;min-height:40px;padding:7px 10px}.master-side-nav button span:last-child{white-space:nowrap}.master-layout>.master-content{padding:16px 0}.master-shift-grid-single{grid-template-columns:1fr}}
+
+
+/* MASTER Estamparia — produção diária por turno */
+.master-shift-daily{margin:18px 0 22px;padding:20px;border:1px solid #294154;border-radius:12px;background:linear-gradient(145deg,#142330,#101a24);min-width:0}
+.master-shift-daily .master-section-heading{margin-bottom:16px}
+.master-shift-daily-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0 20px}
+.master-shift-daily-summary article{display:grid;gap:5px;padding:14px;border:1px solid #2b4356;border-radius:9px;background:#101c27}
+.master-shift-daily-summary small{color:#9ab3c8;font-size:11px}
+.master-shift-daily-summary strong{font-size:26px;color:#f2f7fc;font-weight:800}
+.master-shift-daily-summary article:nth-child(1) strong{color:#57d6b0}
+.master-shift-daily-summary article:nth-child(2) strong{color:#69b9f3}
+.master-shift-daily-summary span{color:#7895ab;font-size:10px}
+.master-shift-chart{display:flex;align-items:stretch;gap:8px;min-height:190px;padding:12px 8px 0;border-bottom:1px solid #30485a;overflow-x:auto}
+.master-shift-day{display:flex;flex:1 0 38px;min-width:38px;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px}
+.master-shift-day-bars{display:flex;align-items:flex-end;justify-content:center;gap:3px;width:100%;height:140px}
+.master-shift-bar{width:13px;min-height:3px;border-radius:4px 4px 0 0}
+.master-shift-bar.first{background:#45c9a5}
+.master-shift-bar.second{background:#5aa8e8}
+.master-shift-day>strong{color:#d9e8f5;font-size:9px}
+.master-shift-day>small{color:#83a0b7;font-size:9px;white-space:nowrap}
+.master-shift-chart-legend{display:flex;gap:18px;justify-content:flex-end;margin:12px 0;color:#9bb2c7;font-size:10px}
+.master-shift-chart-legend span{display:flex;align-items:center;gap:6px}
+.master-shift-chart-legend i{width:8px;height:8px;border-radius:2px}
+.master-shift-chart-legend .first-dot{background:#45c9a5}
+.master-shift-chart-legend .second-dot{background:#5aa8e8}
+.master-shift-table-wrap{max-height:300px;overflow:auto;border:1px solid #2b4356;border-radius:8px}
+.master-shift-table{width:100%;border-collapse:collapse;font-size:11px}
+.master-shift-table th,.master-shift-table td{padding:10px 13px;border-bottom:1px solid #263b4c;text-align:right}
+.master-shift-table th:first-child,.master-shift-table td:first-child{text-align:left}
+.master-shift-table th{position:sticky;top:0;background:#172635;color:#9ab3c8}
+.master-shift-table td{color:#d9e8f5}
+.master-shift-table td strong{color:#57d6b0}
+.master-shift-empty{padding:24px;text-align:center;color:#92a9bb;font-size:12px}
+@media(max-width:700px){.master-shift-daily{padding:13px}.master-shift-daily-summary{grid-template-columns:1fr}.master-shift-daily-summary article{grid-template-columns:1fr auto;align-items:center}.master-shift-daily-summary article span{grid-column:1/-1}}
