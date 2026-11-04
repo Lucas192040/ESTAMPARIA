@@ -10,10 +10,11 @@ export async function GET(req:Request){
  try{
   await requireRole("master"); await guard(req,"read");
   const result=await db().query<EventRow>(`
-   SELECT programacao_id,subsetor_id,efetivo_novo,registrado_em
-   FROM public.est_apontamentos
-   WHERE programacao_id IS NOT NULL AND efetivo_novo IS NOT NULL
-   ORDER BY registrado_em ASC,id ASC
+   SELECT COALESCE(a.programacao_id,p.id) AS programacao_id,a.subsetor_id,a.efetivo_novo,a.registrado_em
+   FROM public.est_apontamentos a
+   LEFT JOIN LATERAL (SELECT id FROM public.est_programacoes p WHERE p.op_id=a.op_id AND p.data_programada=a.data_programada_original ORDER BY p.id LIMIT 1) p ON a.programacao_id IS NULL
+   WHERE COALESCE(a.programacao_id,p.id) IS NOT NULL AND a.efetivo_novo IS NOT NULL
+   ORDER BY a.registrado_em ASC,a.id ASC
   `);
   const byMoment=new Map<string,EventRow[]>();
   for(const row of result.rows){
