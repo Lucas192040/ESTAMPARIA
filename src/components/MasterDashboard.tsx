@@ -49,6 +49,86 @@ function ShiftDailyChart({rows,activity}:{rows:ShiftDay[];activity:string|null})
  </aside></div></>;
 }
 
+type DailyProduction={date:string;planned:number;done:number;pending:number};
+function MasterSummary({planned,done,pending,percent,overduePieces,overdueCount}:{planned:number;done:number;pending:number;percent:number;overduePieces:number;overdueCount:number}){
+ return <div className="master-sector-summary-row"><section className="master-sector-overview">
+  <div className="master-sector-overview-label"><span>✓</span><strong>Resumo Geral do Mês</strong></div>
+  <div><span>PROGRAMADA</span><strong>{n(planned)}</strong></div>
+  <div><span>REALIZADA</span><strong className="master-done">{n(done)}</strong></div>
+  <div><span>PENDENTE</span><strong className="master-pending">{n(pending)}</strong></div>
+  <div className="master-sector-overall-progress"><strong style={{background:`conic-gradient(#19ddb0 ${percent}%, #244b66 ${percent}%)`}}>{percent}%</strong><small>Conclusão do Mês</small><div className="master-metric-track"><span style={{width:percent+"%"}}/></div></div>
+ </section><aside className="master-overdue-card"><span>💡 Peças Atrasadas</span><strong>{n(overduePieces)}</strong><small>{n(overdueCount)} programações vencidas</small></aside></div>;
+}
+function MasterProductionCard({name,planned,done,color,icon}:{name:string;planned:number;done:number;color:string;icon:string}){
+ const pending=Math.max(0,planned-done),percent=planned?Math.min(100,Math.round(done/planned*100)):0;
+ return <article className={"master-sector-card sector-"+color}><div className="master-sector-card-title"><span className="master-sector-symbol">{icon}</span><strong>{name}</strong><span className="master-metric-tag">● Produção</span></div>
+  <div className="master-sector-values"><div><small>Programada</small><strong>{n(planned)}</strong></div><div><small>Realizada</small><strong className="master-done">{n(done)}</strong></div><div><small>Pendente</small><strong className="master-pending">{n(pending)}</strong></div></div>
+  <div className="master-metric-track"><span style={{width:percent+"%"}}/></div><div className="master-sector-foot"><span>{percent}% concluído</span><span>{n(planned)} previstas</span></div>
+ </article>;
+}
+function MasterDailyHistory({rows,activity,processName}:{rows:DailyProduction[];activity:string|null;processName:string}){
+ const saved=shift(activity),max=Math.max(1,...rows.map(x=>Math.max(x.planned,x.done))),chartMax=Math.max(1000,Math.ceil(max/500)*500);
+ const ticks=[chartMax,Math.round(chartMax*2/3/500)*500,Math.round(chartMax/3/500)*500,0];
+ const height=(v:number)=>v?Math.max(2,v/chartMax*100):0;
+ return <>
+  <section className="master-shift-daily">
+   <div className="master-section-heading"><div><span className="master-kicker">ACOMPANHAMENTO DIÁRIO</span><h2>Produção por Dia – {processName}</h2></div><div className="master-history-legend"><span><i className="planned-dot"/>Programada</span><span><i className="done-dot"/>Realizada</span></div></div>
+   {rows.length===0?<p className="master-shift-empty">Não há produção registrada neste mês.</p>:<div className="master-shift-chart-shell"><div className="master-shift-y-axis">{ticks.map((v,i)=><span key={i}>{n(v)}</span>)}</div><div className="master-shift-chart-plot"><div className="master-shift-grid-lines"><i/><i/><i/><i/></div><div className="master-shift-chart">{rows.map(x=><div className="master-shift-day" key={x.date}><div className="master-shift-day-bars master-total-bars"><div className="master-shift-column"><span>{n(x.planned)}</span><i className="master-shift-bar planned" style={{height:height(x.planned)+"%"}}/></div><div className="master-shift-column"><span>{n(x.done)}</span><i className="master-shift-bar done" style={{height:height(x.done)+"%"}}/></div></div><small>{date(x.date)}</small></div>)}</div></div></div>}
+  </section>
+  <div className="master-daily-bottom"><section className="master-daily-table-panel"><div className="master-section-heading"><div><span className="master-kicker">DETALHAMENTO DO MÊS</span><h2>Resumo Diário – {processName}</h2></div></div>
+   <div className="master-shift-table-wrap"><table className="master-shift-table"><thead><tr><th>Data</th><th>Programada</th><th>Realizada</th><th>Pendente</th></tr></thead><tbody>{rows.map(x=><tr key={x.date}><td>{date(x.date)}</td><td>{n(x.planned)}</td><td>{n(x.done)}</td><td><strong className="master-pending">{n(x.pending)}</strong></td></tr>)}</tbody></table></div>
+  </section>
+  <aside className="master-daily-info"><div className="master-section-heading"><span className="master-daily-info-icon">☼</span><h2>Informações Importantes</h2></div>
+   <div className="master-info-shifts"><article><span>◷</span><div><b>1º Turno</b><strong>07:00 às 17:15</strong></div></article><article><span>◷</span><div><b>2º Turno</b><strong>17:20 às 02:48</strong></div></article></div>
+   <div className="master-info-last"><span className="master-info-check">✓</span><div><b>Último registro de {processName}:</b><strong>{saved.label==="Sem apontamento"?"Nenhum apontamento registrado":saved.date+" às "+saved.time+" – "+saved.label}</strong></div></div>
+  </aside></div>
+ </>;
+}
+function RadiadorMasterPanel({rows,today,activity}:{rows:Order[];today:string;activity:string|null}){
+ let planned=0,done=0,overduePieces=0,overdueCount=0,completed=0,inProgress=0,notStarted=0,noNeed=0;
+ const byDate=new Map<string,DailyProduction>();
+ for(const order of rows)for(const p of order.programacoes){
+  const qty=p.radiador_nao_necessario?0:Number(p.qtd_programada||0),actual=p.radiador_nao_necessario?0:Math.min(qty,Number(p.radiador?.qtd_apontada||0));
+  planned+=qty;done+=actual;
+  if(p.radiador_nao_necessario)noNeed++;
+  else if(actual>=qty&&qty>0)completed++;
+  else if(actual>0)inProgress++;
+  else notStarted++;
+  if(!p.radiador_nao_necessario&&p.data_programada<today&&actual<qty){overdueCount++;overduePieces+=qty-actual;}
+  if(!p.radiador_nao_necessario){const d=byDate.get(p.data_programada)??{date:p.data_programada,planned:0,done:0,pending:0};d.planned+=qty;d.done+=actual;d.pending+=Math.max(0,qty-actual);byDate.set(p.data_programada,d);}
+ }
+ const pending=Math.max(0,planned-done),percent=planned?Math.min(100,Math.round(done/planned*100)):0;
+ const daily=[...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date));
+ return <><MasterSummary planned={planned} done={done} pending={pending} percent={percent} overduePieces={overduePieces} overdueCount={overdueCount}/>
+  <section className="master-sector-cards master-radiador-cards">
+   <MasterProductionCard name="RADIADOR" planned={planned} done={done} color="blue" icon="▤"/>
+   <article className="master-sector-card sector-purple master-status-card"><div className="master-sector-card-title"><span className="master-sector-symbol">✓</span><strong>CONCLUÍDAS</strong></div><strong className="master-status-number">{n(completed)}</strong><small>Programações concluídas</small></article>
+   <article className="master-sector-card sector-cyan master-status-card"><div className="master-sector-card-title"><span className="master-sector-symbol">◷</span><strong>EM ANDAMENTO</strong></div><strong className="master-status-number">{n(inProgress)}</strong><small>Programações com produção iniciada</small></article>
+   <article className="master-sector-card sector-amber master-status-card"><div className="master-sector-card-title"><span className="master-sector-symbol">○</span><strong>SEM NECESSIDADE</strong></div><strong className="master-status-number">{n(noNeed)}</strong><small>Programações liberadas do Radiador</small></article>
+  </section>
+  <MasterDailyHistory rows={daily} activity={activity} processName="Radiador"/>
+ </>;
+}
+function FerragemMasterPanel({rows,today,activity}:{rows:F[];today:string;activity:string|null}){
+ const defs=[{key:"viga_superior" as const,name:"VIGA SUPERIOR",color:"blue",icon:"▰"},{key:"viga_inferior" as const,name:"VIGA INFERIOR",color:"purple",icon:"▱"},{key:"dobradeira_superior" as const,name:"DOBRADEIRA SUPERIOR",color:"cyan",icon:"▰"},{key:"dobradeira_inferior" as const,name:"DOBRADEIRA INFERIOR",color:"amber",icon:"▱"}];
+ const metrics=defs.map(d=>{const planned=rows.reduce((s,r)=>s+Number(r.qtd_programada||0),0),done=rows.reduce((s,r)=>s+Math.min(Number(r.qtd_programada||0),Number(r[d.key]||0)),0);return {...d,planned,done,pending:Math.max(0,planned-done),percent:planned?Math.min(100,Math.round(done/planned*100)):0};});
+ const planned=metrics.reduce((s,m)=>s+m.planned,0),done=metrics.reduce((s,m)=>s+m.done,0),pending=Math.max(0,planned-done),percent=planned?Math.min(100,Math.round(done/planned*100)):0;
+ let overduePieces=0,overdueCount=0;
+ const byDate=new Map<string,DailyProduction>();
+ for(const r of rows){
+  const qty=Number(r.qtd_programada||0),values=defs.map(d=>Number(r[d.key]||0)),complete=Math.min(qty,...values);
+  if(r.data_programada<today&&complete<qty){overdueCount++;overduePieces+=qty-complete;}
+  const d=byDate.get(r.data_programada)??{date:r.data_programada,planned:0,done:0,pending:0};
+  d.planned+=qty;d.done+=complete;d.pending+=Math.max(0,qty-complete);byDate.set(r.data_programada,d);
+ }
+ const daily=[...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date));
+ return <><MasterSummary planned={planned} done={done} pending={pending} percent={percent} overduePieces={overduePieces} overdueCount={overdueCount}/>
+  <section className="master-sector-cards">{metrics.map(m=><MasterProductionCard key={m.key} name={m.name} planned={m.planned} done={m.done} color={m.color} icon={m.icon}/>)}</section>
+  <MasterDailyHistory rows={daily} activity={activity} processName="Ferragem"/>
+ </>;
+}
+
+
 const shift=(v:string|null)=>{if(!v)return{label:"Sem apontamento",time:"—",date:"—"};const d=new Date(v),parts=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Manaus",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(d),get=(k:string)=>parts.find(p=>p.type===k)?.value??"",h=Number(get("hour")),m=Number(get("minute")),mins=h*60+m;let label="Fora do turno";if(mins>=420&&mins<=1035)label="1º turno";else if(mins>=1040||mins<=168)label="2º turno";return{label,time:get("hour")+":"+get("minute"),date:get("day")+"/"+get("month")+"/"+get("year")}};
 const n=(v:number)=>Number(v||0).toLocaleString("pt-BR");
 const date=(v:string)=>{const a=String(v||"").slice(0,10).split("-");return a.length===3?a[2]+"/"+a[1]+"/"+a[0]:"—"};
@@ -73,7 +153,7 @@ export default function MasterDashboard(){
  <div className="master-layout"><nav className="master-side-nav" aria-label="Navegação dos processos"><span className="master-side-label">PAINÉIS</span><button type="button" className={view==="overview"?"active":""} onClick={()=>setView("overview")}><span className="master-nav-icon">▥</span><span>Visão geral</span></button><button type="button" className={view==="estamparia"?"active":""} onClick={()=>setView("estamparia")}><span className="master-nav-icon">▰</span><span>Estamparia</span></button><button type="button" className={view==="radiador"?"active":""} onClick={()=>setView("radiador")}><span className="master-nav-icon">▤</span><span>Radiador</span></button><button type="button" className={view==="ferragem"?"active":""} onClick={()=>setView("ferragem")}><span className="master-nav-icon">⚒</span><span>Ferragem</span></button></nav><div className="master-content"><section className="master-intro"><div><span className="master-kicker">ITAM　›　MASTER - {view==="estamparia"?"ESTAMPARIA":view==="radiador"?"RADIADOR":view==="ferragem"?"FERRAGEM":"PRODUÇÃO"}</span><h2>{view==="estamparia"?<span className="master-estamparia-mark" aria-hidden="true">▥</span>:null}{view==="overview"?"Painel de coordenação":view==="estamparia"?"Estamparia":view==="radiador"?"Radiador":"Ferragem"}</h2><p>{view==="overview"?"Visão consolidada de Estamparia, Radiador e Ferragem.":`Acompanhamento individual de ${view==="estamparia"?"Estamparia":view==="radiador"?"Radiador":"Ferragem"}.`}</p></div></section>
  {error&&<div className="error-inline" role="alert">{error}</div>}{loading&&<div className="master-loading">Carregando dados dos processos...</div>}
  {!loading&&<>{view==="overview"&&<><section className="master-total-banner"><div><span>PROGRAMADA TOTAL</span><strong>{n(all.p)}</strong></div><div><span>REALIZADA</span><strong className="master-done">{n(all.d)}</strong></div><div><span>PENDENTE</span><strong className="master-pending">{n(all.pending)}</strong></div><div className="master-total-progress"><strong>{pct}%</strong><small>conclusão geral</small><div className="master-metric-track"><span style={{width:pct+"%"}}/></div></div></section><section className="master-metrics"><Metric title="Estamparia" t={et} detail={n(et.orders)+" programações"}/><Metric title="Radiador" t={rt} detail={n(rt.orders)+" programações"}/><Metric title="Ferragem" t={ft} detail={n(ft.orders)+" OPs"}/></section><Chart items={[{name:"Estamparia",p:et.planned,d:et.done},{name:"Radiador",p:rt.planned,d:rt.done},{name:"Ferragem",p:ft.planned,d:ft.done}]}/><section className="master-shifts"><div className="master-shifts-heading"><div><span className="master-kicker">ATIVIDADE RECENTE</span><h2>Último salvamento por processo</h2><p>Horário de Manaus · turno identificado pelo momento do salvamento</p></div><span className="master-live-label">● REGISTROS DO SISTEMA</span></div><div className="master-shift-grid">{([{name:"Estamparia",value:activity?.estamparia},{name:"Radiador",value:activity?.radiador},{name:"Ferragem",value:activity?.ferragem}] as const).map(x=>{const s=shift(x.value??null);return <article className="master-shift-card" key={x.name}><span className="master-shift-name">{x.name}</span><strong className={s.label==="Fora do turno"?"master-shift-off":s.label==="Sem apontamento"?"":"master-shift-on"}>{s.label}</strong><div className="master-shift-datetime"><b>{s.time}</b><span>{s.date}</span></div><small>{x.value?"Último salvamento registrado":"Nenhum salvamento registrado"}</small></article>})}</div></section><div className="master-details-heading"><div><span className="master-kicker">CONSULTA DE ORDENS</span><h2>Detalhamento por processo</h2></div><span>Abra cada setor para consultar as OPs</span></div></>}
- {view==="estamparia"&&<><EstampariaSectors rows={est} today={today}/><ShiftDailyChart rows={shiftDaily.filter(x=>x.date.startsWith(selectedMonth))} activity={activity?.estamparia??null}/></>}{view!=="overview"&&view!=="estamparia"&&<><section className="master-metrics">{view==="radiador"?<Metric title="Radiador" t={rt} detail={n(rt.orders)+" programações"}/>:<Metric title="Ferragem" t={ft} detail={n(ft.orders)+" OPs"}/>}</section><section className="master-shifts"><div className="master-shifts-heading"><div><span className="master-kicker">ATIVIDADE RECENTE</span><h2>Último salvamento</h2><p>Horário de Manaus · turno identificado pelo momento do salvamento</p></div></div><div className="master-shift-grid master-shift-grid-single">{(()=>{const x=view==="radiador"?{name:"Radiador",value:activity?.radiador}:{name:"Ferragem",value:activity?.ferragem};const s=shift(x.value??null);return <article className="master-shift-card"><span className="master-shift-name">{x.name}</span><strong className={s.label==="Fora do turno"?"master-shift-off":s.label==="Sem apontamento"?"":"master-shift-on"}>{s.label}</strong><div className="master-shift-datetime"><b>{s.time}</b><span>{s.date}</span></div><small>{x.value?"Último salvamento registrado":"Nenhum salvamento registrado"}</small></article>})()}</div></section><div className="master-details-heading"><div><span className="master-kicker">CONSULTA DE ORDENS</span><h2>Ordens de {view==="radiador"?"Radiador":"Ferragem"}</h2></div></div></>}
+ {view==="estamparia"&&<><EstampariaSectors rows={est} today={today}/><ShiftDailyChart rows={shiftDaily.filter(x=>x.date.startsWith(selectedMonth))} activity={activity?.estamparia??null}/></>}{view==="radiador"&&<RadiadorMasterPanel rows={rad} today={today} activity={activity?.radiador??null}/ >}{view==="ferragem"&&<FerragemMasterPanel rows={ff} today={today} activity={activity?.ferragem??null}/ >}
  {(view==="overview")&&<Section title="Estamparia" count={est.length}><Rows rows={est}/></Section>}{(view==="overview"||view==="radiador")&&<Section title="Radiador" count={rad.length}><Rows rows={rad}/></Section>}{(view==="overview"||view==="ferragem")&&<Section title="Ferragem" count={ff.length}><div className="master-grid">{ff.map(r=><article className="master-card" key={r.id}><div className="master-card-head"><strong>OP {r.op_pai} · {r.nro_op}</strong><span>{date(r.data_programada)}</span></div><div className="master-card-body"><div><small>Cliente</small><strong>{r.nome_cliente}</strong></div><div><small>Produto</small><strong>{r.descr_produto||r.produto}</strong></div><div><small>Programada</small><strong>{n(r.qtd_programada)}</strong></div><div><small>Vigas sup. / inf.</small><strong>{n(r.viga_superior)} / {n(r.viga_inferior)}</strong></div><div><small>Dobradeira sup. / inf.</small><strong>{n(r.dobradeira_superior)} / {n(r.dobradeira_inferior)}</strong></div><div><small>Status</small><strong>{r.status_op}</strong></div></div></article>)}</div></Section>}</>}
  <footer className="master-footer">ITAM · Painel MASTER <span>Somente consulta · sem permissão para apontamentos</span></footer></div></div></main>;
 }
