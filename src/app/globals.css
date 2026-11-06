@@ -2304,3 +2304,103 @@ tr:last-child td {
 /* Em telas de desktop como a referência, manter os quatro setores na mesma linha */
 @media(min-width:961px){.master-sector-cards{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:960px) and (min-width:621px){.master-sector-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Acabamento final de cores — Master Estamparia */
+.master-shell{background:radial-gradient(ellipse at 60% -15%,#102a40 0,#081522 42%,#07111d 78%);color:#f4f8fc}
+.master-header{background:linear-gradient(100deg,#06101b 0%,#091b2b 55%,#071522 100%);border-bottom-color:#294b66;box-shadow:0 5px 18px #0003}
+.master-brand img{border-right-color:#294b66}
+.master-brand h1{color:#f5f8fc;letter-spacing:-.3px}
+.master-brand h1 span{color:#23e1ad}
+.master-header-months .master-month-input-wrap{background:#0d1e2c;border-color:#31536d}
+.master-header-months .master-calendar-icon{color:#69bff4}
+.master-header-months .master-month-input-wrap input{font-weight:800}
+.master-header-months .master-month-picker>button{border-color:#31536d;background:#101f2c;color:#e6f0f8}
+.master-header-months .master-month-picker>button.master-month-current{border-color:#087f68;background:#0d302b;color:#42e4b3}
+.master-header-months .master-month-picker>button.master-month-current.active{background:#104536;border-color:#20bd92}
+.master-header-months .master-month-picker>button:hover{border-color:#20d6a4;background:#132d36}
+.master-actions .secondary{border-color:#31516a;background:#102131;color:#e1edf7}
+.master-layout{background:transparent}
+.master-side-nav{background:linear-gradient(180deg,#0c1d2a,#091522);border:1px solid #1f3e55;border-radius:11px}
+.master-side-label{color:#61a0bd}
+.master-side-nav button{color:#b8cadd;border-color:transparent}
+.master-side-nav button:hover{border-color:#28516a;background:#142b3b;color:#fff}
+.master-side-nav button.active{border-color:#087f69;background:linear-gradient(100deg,#0c3b34,#102d31);color:#68f0c1;box-shadow:inset 3px 0 #21e0ad,0 3px 12px #0003}
+.master-nav-icon{background:#102739;border-color:#2c516b;color:#a8d2ed}
+.master-side-nav button.active .master-nav-icon{background:#0d463a;border-color:#1ab68e;color:#63f1c2}
+.master-intro .master-kicker{color:#25dfdc}
+.master-intro h2{color:#f7fbff;text-shadow:0 2px 10px #0004}
+.master-intro p{color:#a9bed1}
+.master-sector-summary-row{gap:12px}
+.master-sector-overview{grid-template-columns:repeat(3,minmax(0,1fr)) minmax(145px,1.1fr);background:linear-gradient(115deg,#142b40,#101f31);border-color:#2d5676;box-shadow:0 7px 20px #0003}
+.master-sector-overview-label{grid-column:1/-1;display:flex!important;flex-direction:row!important;align-items:center;gap:9px!important;padding:0 0 8px!important;margin:0 0 3px;border:0!important;border-bottom:1px solid #294b64!important}
+.master-sector-overview-label>span{display:grid;place-items:center;width:19px;height:19px;border-radius:50%;background:#14dca8;color:#063328;font-size:13px;font-weight:900}
+.master-sector-overview-label>strong{font-size:12px;color:#f1f7fc;letter-spacing:0}
+.master-sector-overview>div:not(.master-sector-overview-label){border-right-color:#2d4c66}
+.master-sector-overview>div>span{color:#a9bfd2}
+.master-sector-overview>div>strong{color:#f3f8fc}
+.master-sector-overview>div .master-done{color:#2de5b3}
+.master-sector-overview>div .master-pending{color:#ffba45}
+.master-sector-overall-progress{grid-template-columns:58px 1fr}
+.master-sector-overall-progress>strong{position:relative;isolation:isolate;display:grid;place-items:center;width:58px;height:58px;border:0!important;border-radius:50%;font-size:16px!important;color:#f7fffc!important;box-shadow:0 0 0 1px #1fe3b1,0 0 18px #11c99738}
+.master-sector-overall-progress>strong:before{content:"";position:absolute;z-index:-1;inset:5px;border-radius:50%;background:#132d40}
+.master-sector-overall-progress>small{color:#b1c6d8;font-size:10px}
+.master-sector-overall-progress .master-metric-track{background:#26435a}
+.master-overdue-card{position:relative;border-color:#8b5c1c;background:linear-gradient(140deg,#33291b 0%,#211f20 100%);box-shadow:inset 0 0 22px #ed9e2412,0 7px 18px #0003}
+.master-overdue-card>span{display:flex;align-items:center;gap:8px;color:#ffd16a;font-size:12px}
+.master-overdue-card>strong{font-size:27px;color:#ff716a;text-shadow:0 0 13px #ff625533}
+.master-overdue-card>small{color:#d5bd99}
+.master-sector-cards{gap:11px}
+.master-sector-card{position:relative;overflow:hidden;background:linear-gradient(145deg,#172d40,#0e1c2a);border-color:#2d5571;box-shadow:0 6px 18px #0003;transition:border-color .15s,transform .15s,box-shadow .15s}
+.master-sector-card:after{content:"";position:absolute;left:0;top:0;width:3px;height:100%;background:#268ef0;opacity:.85}
+.master-sector-card:hover{transform:translateY(-1px);box-shadow:0 9px 22px #0005}
+.master-sector-card-title>strong{color:#f6faff;letter-spacing:.1px}
+.master-sector-symbol{background:#123d5b;color:#32b8ff}
+.sector-blue{border-color:#167cb9;background:linear-gradient(145deg,#122f48,#0e1d2d)}
+.sector-blue:after{background:#1699ff}
+.sector-purple{border-color:#7650b7;background:linear-gradient(145deg,#252044,#141a30)}
+.sector-purple:after{background:#9860fa}
+.sector-cyan{border-color:#168e88;background:linear-gradient(145deg,#10343b,#0d202d)}
+.sector-cyan:after{background:#22d6c3}
+.sector-amber{border-color:#a87928;background:linear-gradient(145deg,#3b301f,#201e1a)}
+.sector-amber:after{background:#f6b32e}
+.sector-purple .master-sector-symbol{background:#3b2c6b;color:#bf9aff}
+.sector-cyan .master-sector-symbol{background:#124d50;color:#45e3d2}
+.sector-amber .master-sector-symbol{background:#604316;color:#ffd05a}
+.master-sector-card-title .master-metric-tag{border-color:#167d63;background:#10392f;color:#5ce8ba}
+.master-sector-values small{color:#adc2d5}
+.master-sector-values strong{color:#f7faff}
+.master-sector-values .master-done{color:#28e4b0}
+.master-sector-values .master-pending{color:#ffbf48}
+.master-sector-values>div+div{border-left-color:#34536c}
+.master-sector-card .master-metric-track{background:#29445b}
+.master-sector-card .master-metric-track span{background:linear-gradient(90deg,#11cda6,#22e3a8)}
+.sector-purple .master-metric-track span{background:linear-gradient(90deg,#8252db,#b28bff)}
+.sector-cyan .master-metric-track span{background:linear-gradient(90deg,#0eaaa5,#32e1cd)}
+.sector-amber .master-metric-track span{background:linear-gradient(90deg,#e99b19,#ffd34e)}
+.master-sector-foot{color:#b5c9d9}
+.master-shift-daily{background:linear-gradient(145deg,#142b40,#101f30);border-color:#2c5573;box-shadow:0 7px 18px #0003}
+.master-shift-daily .master-section-heading h2{color:#eff7ff}
+.master-shift-daily .master-kicker{color:#9bc0d9}
+.master-shift-y-axis{color:#c0d2e1}
+.master-shift-grid-lines i{border-color:#294b67}
+.master-shift-chart-plot{border-bottom:1px solid #47647b}
+.master-shift-column>span{color:#f0f7fd;text-shadow:0 1px 3px #0009;font-size:9px}
+.master-shift-day>small{color:#d2e2ef}
+.master-daily-table-panel,.master-daily-info{background:linear-gradient(145deg,#142b40,#101f30);border-color:#2c5573;box-shadow:0 6px 16px #0003}
+.master-daily-table-panel h2,.master-daily-info h2{color:#f0f7fd}
+.master-daily-table-panel .master-kicker,.master-daily-info .master-kicker{color:#8fc3df}
+.master-daily-table-panel .master-shift-table-wrap{border-color:#294961;background:#0b1b29}
+.master-daily-table-panel .master-shift-table th{background:#18334a;color:#d7e8f5;border-bottom-color:#294b64}
+.master-daily-table-panel .master-shift-table td{color:#e8f1f8;border-bottom-color:#203d53}
+.master-daily-table-panel .master-shift-table td strong{color:#25e2ac}
+.master-info-shifts article{border-bottom-color:#2c506a}
+.master-info-shifts article>span{color:#239cff;text-shadow:0 0 10px #168df744}
+.master-info-shifts b,.master-info-last b{color:#e0edf7}
+.master-info-shifts strong,.master-info-last strong{color:#f4f8fc}
+.master-info-last{border-top-color:#2b4a62}
+.master-info-check{background:linear-gradient(135deg,#18edb0,#12c995);color:#06372b;box-shadow:0 0 12px #14dba638}
+.master-footer{color:#94b1c7;border-top-color:#25465e}
+.master-footer span{color:#6f91a9}
+@media(max-width:900px){.master-sector-overview-label{padding-bottom:8px!important}.master-overdue-card{min-height:90px}}
+@media(max-width:620px){.master-header-months .master-month-input-wrap{border-color:#31536d}.master-sector-overview{background:linear-gradient(145deg,#142b40,#101f30)}.master-sector-overdue{grid-column:auto}}
