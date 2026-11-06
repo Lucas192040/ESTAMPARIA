@@ -2468,3 +2468,24 @@ tr:last-child td {
  .master-sector-summary-row{grid-template-columns:minmax(0,1fr)}
  .master-overdue-card{min-height:80px}
 }
+
+
+/* Master Radiador e Ferragem — mesma identidade visual da Estamparia */
+.master-radiador-cards{grid-template-columns:repeat(4,minmax(0,1fr))}
+.master-status-card{display:flex;flex-direction:column;justify-content:flex-start;gap:6px;min-height:112px}
+.master-status-card .master-sector-card-title{margin-bottom:2px}
+.master-status-card .master-status-number{font-size:25px;font-weight:850;line-height:1.15;color:#f4f8fc}
+.master-status-card>small{font-size:9px;color:#b8cbd9;line-height:1.35}
+.master-history-legend{display:flex;align-items:center;gap:13px;font-size:9px;color:#d6e4ef}
+.master-history-legend>span{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.master-history-legend i{display:inline-block;width:8px;height:8px;border-radius:50%}
+.master-history-legend .planned-dot{background:#238cf4}
+.master-history-legend .done-dot{background:#20dfad}
+.master-shift-day-bars.master-total-bars{height:98px;gap:5px;align-items:stretch}
+.master-shift-bar.planned{background:linear-gradient(180deg,#2694ff,#1672db)}
+.master-shift-bar.done{background:linear-gradient(180deg,#20e6b0,#14bd90)}
+.master-total-bars .master-shift-column{justify-content:flex-end}
+.master-total-bars .master-shift-column>span{font-size:8px}
+.master-radiador-cards .master-sector-card:first-child:after{background:#1699ff}
+@media(max-width:960px){.master-radiador-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.master-radiador-cards{grid-template-columns:1fr}.master-history-legend{gap:7px;font-size:8px}}
