@@ -110,13 +110,13 @@ function RadiadorMasterPanel({rows,today,activity,selectedMonth}:{rows:Order[];t
  </>;
 }
 function FerragemMasterPanel({rows,today,activity,selectedMonth}:{rows:F[];today:string;activity:string|null;selectedMonth:string}){
+ const monthRows=rows.filter(r=>r.data_programada.startsWith(selectedMonth));
  const defs=[{key:"viga_superior" as const,name:"VIGA SUPERIOR",color:"blue",icon:"▰"},{key:"viga_inferior" as const,name:"VIGA INFERIOR",color:"purple",icon:"▱"},{key:"dobradeira_superior" as const,name:"DOBRADEIRA SUPERIOR",color:"cyan",icon:"▰"},{key:"dobradeira_inferior" as const,name:"DOBRADEIRA INFERIOR",color:"amber",icon:"▱"}];
- const metrics=defs.map(d=>{const planned=rows.reduce((s,r)=>s+Number(r.qtd_programada||0),0),done=rows.reduce((s,r)=>s+Math.min(Number(r.qtd_programada||0),Number(r[d.key]||0)),0);return {...d,planned,done,pending:Math.max(0,planned-done),percent:planned?Math.min(100,Math.round(done/planned*100)):0};});
+ const metrics=defs.map(d=>{const planned=monthRows.reduce((s,r)=>s+Number(r.qtd_programada||0),0),done=monthRows.reduce((s,r)=>s+Math.min(Number(r.qtd_programada||0),Number(r[d.key]||0)),0);return {...d,planned,done,pending:Math.max(0,planned-done),percent:planned?Math.min(100,Math.round(done/planned*100)):0};});
  const planned=metrics.reduce((s,m)=>s+m.planned,0),done=metrics.reduce((s,m)=>s+m.done,0),pending=Math.max(0,planned-done),percent=planned?Math.min(100,Math.round(done/planned*100)):0;
  let overduePieces=0,overdueCount=0;
  const byDate=new Map<string,DailyProduction>();
- for(const r of rows){
-  if(!r.data_programada.startsWith(selectedMonth))continue;
+ for(const r of monthRows){
   const qty=Number(r.qtd_programada||0),values=defs.map(d=>Number(r[d.key]||0)),complete=Math.min(qty,...values);
   if(r.data_programada<today&&complete<qty){overdueCount++;overduePieces+=qty-complete;}
   const d=byDate.get(r.data_programada)??{date:r.data_programada,planned:0,done:0,pending:0};
