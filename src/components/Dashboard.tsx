@@ -49,27 +49,62 @@ export default function Dashboard({ mode }: { mode: "estamparia" | "radiador" })
     [mobileFilters, setMobileFilters] = useState(false),
     [view, setView] = useState<"table" | "grid">("table"),
     [refresh, setRefresh] = useState(0),
-    [notice, setNotice] = useState("");
+    [notice, setNotice] = useState(""),
+    [selectedMonth, setSelectedMonth] = useState(() =>
+      new Date().toLocaleDateString("en-CA", { timeZone: "America/Manaus" }).slice(0, 7),
+    );
   const [editing, setEditing] = useState<{
     order: Order;
     mode: "adicionar" | "corrigir";
     schedule?: number;
   } | null>(null);
-  // Local filtering is shared with the previous server-side listing logic.
-  // Search, sorting and pagination now consume zero API/Neon requests.
-  const data = useMemo<Listing | null>(() => {
+  // Keep the whole screen scoped to the selected month. Date filters remain
+  // optional refinements inside that month; the month itself never gets bypassed.
+  const monthStart = `${selectedMonth}-01`;
+  const [monthYear, monthNumber] = selectedMonth.split("-").map(Number);
+  const monthEnd = new Date(Date.UTC(monthYear, monthNumber, 0)).toISOString().slice(0, 10);
+  const scopedDataset = useMemo<DailyDataset | null>(() => {
     if (!dataset) return null;
-    if (mode === "radiador") {
-      const isTrifasica = (value: string) => value.trim().toUpperCase().startsWith("TRI");
-      const radiatorDataset: DailyDataset = {
-        ...dataset,
-        rows: dataset.rows.filter((row) => isTrifasica(row.linha_prod)),
-        options: { ...dataset.options, linhas: dataset.options.linhas.filter(isTrifasica) },
-      };
-      return filterDailyDataset(radiatorDataset, filters, mode);
-    }
-    return filterDailyDataset(dataset, filters, mode);
-  }, [dataset, filters, mode]);
+    if (mode !== "radiador") return dataset;
+    const isTrifasica = (value: string) => value.trim().toUpperCase().startsWith("TRI");
+    return {
+      ...dataset,
+      rows: dataset.rows.filter((row) => isTrifasica(row.linha_prod)),
+      options: { ...dataset.options, linhas: dataset.options.linhas.filter(isTrifasica) },
+    };
+  }, [dataset, mode]);
+  const data = useMemo<Listing | null>(() => {
+    if (!scopedDataset) return null;
+    const inicio = filters.inicio && filters.inicio > monthStart ? filters.inicio : monthStart;
+    const fim = filters.fim && filters.fim < monthEnd ? filters.fim : monthEnd;
+    return filterDailyDataset(scopedDataset, { ...filters, inicio, fim }, mode);
+  }, [scopedDataset, filters, mode, monthStart, monthEnd]);
+  // Summary cards always show the selected month's totals, independent of
+  // text/client/date refinements or the status card currently selected.
+  const monthlySummary = useMemo<Listing | null>(() => {
+    if (!scopedDataset) return null;
+    return filterDailyDataset(
+      scopedDataset,
+      { ...EMPTY_FILTERS, inicio: monthStart, fim: monthEnd },
+      mode,
+    );
+  }, [scopedDataset, mode, monthStart, monthEnd]);
+  const monthLabel = new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${selectedMonth}-01T12:00:00Z`));
+  const currentMonth = new Date().toLocaleDateString("en-CA", {
+    timeZone: "America/Manaus",
+  }).slice(0, 7);
+  const changeMonth = (offset: number) => {
+    setSelectedMonth((value) => {
+      const next = new Date(`${value}-01T12:00:00Z`);
+      next.setUTCMonth(next.getUTCMonth() + offset);
+      return next.toISOString().slice(0, 7);
+    });
+    setFilters((value) => ({ ...value, inicio: "", fim: "", pagina: 1 }));
+  };
   const forceNext = useRef(false);
   const lastSuccessfulRefresh = useRef(0);
   const reload = useCallback(() => setRefresh((v) => v + 1), []);
@@ -206,6 +241,40 @@ export default function Dashboard({ mode }: { mode: "estamparia" | "radiador" })
             </div>
           </div>
         </div>
+        <section className="month-navigation" aria-label="Navegação por mês">
+          <button type="button" className="month-nav-button" onClick={() => changeMonth(-1)}>
+            <ChevronLeft size={17} /> Mês Anterior
+          </button>
+          <div className="month-current" aria-live="polite">
+            <span className="month-calendar-icon">▦</span>
+            <strong>{monthLabel.charAt(0).toLocaleUpperCase("pt-BR") + monthLabel.slice(1)}</strong>
+            <input
+              aria-label="Selecionar mês"
+              type="month"
+              value={selectedMonth}
+              onChange={(event) => {
+                if (!event.target.value) return;
+                setSelectedMonth(event.target.value);
+                setFilters((value) => ({ ...value, inicio: "", fim: "", pagina: 1 }));
+              }}
+            />
+          </div>
+          <div className="month-nav-actions">
+            <button
+              type="button"
+              className={selectedMonth === currentMonth ? "month-nav-button month-current-button active" : "month-nav-button month-current-button"}
+              onClick={() => {
+                setSelectedMonth(currentMonth);
+                setFilters((value) => ({ ...value, inicio: "", fim: "", pagina: 1 }));
+              }}
+            >
+              Mês Atual
+            </button>
+            <button type="button" className="month-nav-button" onClick={() => changeMonth(1)}>
+              Próximo Mês <ChevronRight size={17} />
+            </button>
+          </div>
+        </section>
         <div className="summary-grid">
           {(
             [
@@ -241,7 +310,7 @@ export default function Dashboard({ mode }: { mode: "estamparia" | "radiador" })
           ).map(({ status, icon: Icon, label, caption, color }) => (
             <button
               key={status}
-              className={`summary ${filters.situacao === status ? "selected" : ""} ${status === "ATRASADA" && data && data.counts.ATRASADA > 0 ? "summary-alert" : ""}`}
+              className={`summary ${filters.situacao === status ? "selected" : ""} ${status === "ATRASADA" && monthlySummary && monthlySummary.counts.ATRASADA > 0 ? "summary-alert" : ""}`}
               onClick={() =>
                 update("situacao", filters.situacao === status ? "" : status)
               }
@@ -251,7 +320,7 @@ export default function Dashboard({ mode }: { mode: "estamparia" | "radiador" })
                 <Icon size={18} className={color} />
               </div>
               <strong>
-                {connected && data ? numberLabel(data.counts[status]) : "—"}
+                {connected && monthlySummary ? numberLabel(monthlySummary.counts[status]) : "—"}
               </strong>
               <small>{caption}</small>
             </button>
@@ -376,7 +445,7 @@ export default function Dashboard({ mode }: { mode: "estamparia" | "radiador" })
             <strong>{data ? numberLabel(data.total) : "0"}</strong> programações
             diárias{" "}
             <span className="muted">
-              {active > 0 ? "· filtros aplicados" : "· programação atual"}
+              · {monthLabel}
             </span>
           </div>
           <div className="sort-tools">
