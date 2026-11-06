@@ -84,8 +84,11 @@ function MasterDailyHistory({rows,activity,processName}:{rows:DailyProduction[];
   </aside></div>
  </>;
 }
+function MasterCountCard({name,value,caption,color,icon}:{name:string;value:number;caption:string;color:string;icon:string}){
+ return <article className={"master-sector-card sector-"+color+" master-count-card"}><div className="master-sector-card-title"><span className="master-sector-symbol">{icon}</span><strong>{name}</strong><span className="master-metric-tag">● Indicador</span></div><strong className="master-count-value">{n(value)}</strong><small>{caption}</small></article>;
+}
 function RadiadorMasterPanel({rows,today,activity,selectedMonth}:{rows:Order[];today:string;activity:string|null;selectedMonth:string}){
- let planned=0,done=0,overduePieces=0,overdueCount=0,completed=0,inProgress=0,noNeed=0;
+ let planned=0,done=0,overduePieces=0,overdueCount=0,completed=0,inProgress=0,noNeed=0,notStarted=0;
  const byDate=new Map<string,DailyProduction>();
  for(const order of rows)for(const p of order.programacoes){
   if(!p.data_programada.startsWith(selectedMonth))continue;
@@ -94,17 +97,19 @@ function RadiadorMasterPanel({rows,today,activity,selectedMonth}:{rows:Order[];t
   if(p.radiador_nao_necessario)noNeed++;
   else if(actual>=qty&&qty>0)completed++;
   else if(actual>0)inProgress++;
+  else notStarted++;
   if(!p.radiador_nao_necessario&&p.data_programada<today&&actual<qty){overdueCount++;overduePieces+=qty-actual;}
   if(!p.radiador_nao_necessario){const d=byDate.get(p.data_programada)??{date:p.data_programada,planned:0,done:0,pending:0};d.planned+=qty;d.done+=actual;d.pending+=Math.max(0,qty-actual);byDate.set(p.data_programada,d);}
  }
  const pending=Math.max(0,planned-done),percent=planned?Math.min(100,Math.round(done/planned*100)):0;
+ const totalSchedules=completed+inProgress+notStarted;
  const daily=[...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date));
  return <><MasterSummary planned={planned} done={done} pending={pending} percent={percent} overduePieces={overduePieces} overdueCount={overdueCount}/>
   <section className="master-sector-cards master-radiador-cards">
-   <MasterProductionCard name="RADIADOR" planned={planned} done={done} color="blue" icon="▤"/>
-   <article className="master-sector-card sector-purple master-status-card"><div className="master-sector-card-title"><span className="master-sector-symbol">✓</span><strong>CONCLUÍDAS</strong></div><strong className="master-status-number">{n(completed)}</strong><small>Programações concluídas</small></article>
-   <article className="master-sector-card sector-cyan master-status-card"><div className="master-sector-card-title"><span className="master-sector-symbol">◷</span><strong>EM ANDAMENTO</strong></div><strong className="master-status-number">{n(inProgress)}</strong><small>Programações com produção iniciada</small></article>
-   <article className="master-sector-card sector-amber master-status-card"><div className="master-sector-card-title"><span className="master-sector-symbol">○</span><strong>SEM NECESSIDADE</strong></div><strong className="master-status-number">{n(noNeed)}</strong><small>Programações liberadas do Radiador</small></article>
+   <MasterCountCard name="RADIADOR" value={planned} caption="Peças previstas para o processo" color="blue" icon="▤"/>
+   <MasterCountCard name="CONCLUÍDAS" value={completed} caption="Programações finalizadas" color="purple" icon="✓"/>
+   <MasterCountCard name="EM ANDAMENTO" value={inProgress} caption="Programações com produção iniciada" color="cyan" icon="◷"/>
+   <MasterCountCard name="SEM NECESSIDADE" value={noNeed} caption="Programações liberadas do Radiador" color="amber" icon="○"/>
   </section>
   <MasterDailyHistory rows={daily} activity={activity} processName="Radiador"/>
  </>;
@@ -117,10 +122,11 @@ function FerragemMasterPanel({rows,today,activity,selectedMonth}:{rows:F[];today
  let overduePieces=0,overdueCount=0;
  const byDate=new Map<string,DailyProduction>();
  for(const r of monthRows){
-  const qty=Number(r.qtd_programada||0),values=defs.map(d=>Number(r[d.key]||0)),complete=Math.min(qty,...values);
-  if(r.data_programada<today&&complete<qty){overdueCount++;overduePieces+=qty-complete;}
+  const qty=Number(r.qtd_programada||0),values=defs.map(d=>Math.min(qty,Number(r[d.key]||0)));
+  const rowDone=values.reduce((sum,value)=>sum+value,0),rowPending=values.reduce((sum,value)=>sum+Math.max(0,qty-value),0);
+  if(r.data_programada<today&&rowPending>0){overdueCount++;overduePieces+=rowPending;}
   const d=byDate.get(r.data_programada)??{date:r.data_programada,planned:0,done:0,pending:0};
-  d.planned+=qty;d.done+=complete;d.pending+=Math.max(0,qty-complete);byDate.set(r.data_programada,d);
+  d.planned+=qty*defs.length;d.done+=rowDone;d.pending+=rowPending;byDate.set(r.data_programada,d);
  }
  const daily=[...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date));
  return <><MasterSummary planned={planned} done={done} pending={pending} percent={percent} overduePieces={overduePieces} overdueCount={overdueCount}/>
@@ -128,7 +134,6 @@ function FerragemMasterPanel({rows,today,activity,selectedMonth}:{rows:F[];today
   <MasterDailyHistory rows={daily} activity={activity} processName="Ferragem"/>
  </>;
 }
-
 
 const shift=(v:string|null)=>{if(!v)return{label:"Sem apontamento",time:"—",date:"—"};const d=new Date(v),parts=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Manaus",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(d),get=(k:string)=>parts.find(p=>p.type===k)?.value??"",h=Number(get("hour")),m=Number(get("minute")),mins=h*60+m;let label="Fora do turno";if(mins>=420&&mins<=1035)label="1º turno";else if(mins>=1040||mins<=168)label="2º turno";return{label,time:get("hour")+":"+get("minute"),date:get("day")+"/"+get("month")+"/"+get("year")}};
 const n=(v:number)=>Number(v||0).toLocaleString("pt-BR");
