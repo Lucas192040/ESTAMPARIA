@@ -2512,3 +2512,30 @@ tr:last-child td {
 @media(max-width:1180px){.master-radiador-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.master-radiador-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.master-radiador-cards{grid-template-columns:1fr}.master-history-legend{gap:7px;font-size:8px}}
+
+
+/* Visão Geral MASTER — consolidada e alinhada aos painéis de processo */
+.master-overview-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:14px 0 22px}
+.master-overview-process-card{min-width:0;min-height:188px;padding:15px 16px;display:flex;flex-direction:column;gap:9px}
+.master-overview-process-card .master-sector-card-title{display:flex;align-items:center;gap:8px;min-height:27px;margin-bottom:2px}
+.master-overview-process-card .master-sector-card-title>strong{font-size:12px;letter-spacing:.35px;color:#f2f7fb}
+.master-overview-process-card .master-sector-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.master-overview-process-card .master-sector-values>div{min-width:0;display:flex;flex-direction:column;gap:5px}
+.master-overview-process-card .master-sector-values small{font-size:9px;color:#b7c8d7}
+.master-overview-process-card .master-sector-values strong{font-size:clamp(17px,1.55vw,23px);font-weight:850;letter-spacing:-.4px;white-space:nowrap}
+.master-overview-process-card .master-metric-track{height:7px;margin:3px 0 0}
+.master-overview-process-card .master-sector-foot{font-size:9px;color:#c1d1de}
+.master-overview-last{display:flex;flex-direction:column;gap:3px;margin-top:auto;padding-top:9px;border-top:1px solid #2b465b}
+.master-overview-last small{font-size:8px;font-weight:800;letter-spacing:.8px;color:#7897ad}
+.master-overview-last strong{font-size:11px;color:#eaf3fa}
+.master-overview-last strong.master-shift-on{color:#68dfb6}
+.master-overview-last strong.master-shift-off{color:#f2bd69}
+.master-overview-last span{font-size:9px;color:#93aabe}
+.master-overview-cards+.master-chart-panel{margin-top:17px}
+.master-overview-cards~.master-chart-panel .master-section-heading{align-items:center}
+.master-overview-cards~.master-chart-panel .master-chart-row{grid-template-columns:125px minmax(0,1fr) 90px}
+.master-overview-cards~.master-chart-panel .master-chart-numbers{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.master-overview-cards~.master-chart-panel .master-chart-numbers b{font-size:10px}
+.master-details-heading,.master-process{display:none!important}
+@media(max-width:1050px){.master-overview-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.master-overview-cards{grid-template-columns:1fr}.master-overview-process-card{min-height:165px}.master-overview-cards~.master-chart-panel .master-chart-row{grid-template-columns:1fr 70px}.master-overview-cards~.master-chart-panel .master-chart-numbers{grid-column:1/-1}}
