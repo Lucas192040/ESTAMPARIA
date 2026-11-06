@@ -2118,7 +2118,7 @@ tr:last-child td {
 
 /* Navegação mensal da produção */
 .month-navigation{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:18px 0 20px;padding:12px 16px;border:1px solid var(--border,#263748);border-radius:12px;background:linear-gradient(110deg,rgba(22,37,53,.96),rgba(15,26,38,.96));}
-.month-nav-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:0 14px;border:1px solid #28517a;border-radius:8px;background:#12253a;color:#e8f2ff;font:600 13px inherit;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s;}
+.month-nav-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:0 14px;border:1px solid #28517a;border-radius:8px;background:#12253a;color:#e8f2ff;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s;}
 .month-nav-button:hover{background:#173858;border-color:#3689dc;}
 .month-current{position:relative;display:flex;align-items:center;justify-content:center;gap:12px;min-width:220px;color:#f3f7fc;}
 .month-current strong{font-size:16px;text-transform:capitalize;}
