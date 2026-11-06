@@ -2410,3 +2410,61 @@ tr:last-child td {
 .master-intro h2{display:flex;align-items:center;gap:3px}
 .master-nav-icon{font-size:15px}
 .master-side-nav button:last-child .master-nav-icon{font-size:16px}
+
+
+/* Ajustes de fidelidade — cabeçalho, resumo e informações */
+.master-header{grid-template-columns:minmax(220px,1fr) auto auto;min-height:58px;padding-top:5px;padding-bottom:5px}
+.master-brand img{width:86px;height:40px;object-fit:contain;padding-right:12px}
+.master-brand h1{font-size:18px;letter-spacing:-.4px}
+.master-brand p{font-size:10px;color:#c1d2e0}
+.master-month-caption{color:#54c9e5!important}
+.master-header-months .master-month-input-wrap{border-color:#315b78;background:linear-gradient(135deg,#0c2031,#0b1b2a)}
+.master-header-months .master-month-picker>button.master-month-nav{border-color:#304e67;background:#0d1d2a;color:#e0eaf3}
+.master-header-months .master-month-picker>button.master-month-nav:hover{border-color:#2acb9c;background:#12372f}
+.master-sector-overview{position:relative}
+.master-sector-overview>.master-sector-overview-label{grid-column:1/-1!important;display:flex!important;flex-direction:row!important;align-items:center;justify-content:flex-start;gap:9px!important;margin:0 0 3px;padding:0 0 8px!important;border:0!important;border-bottom:1px solid #294c66!important}
+.master-sector-overview-label>span{display:grid;place-items:center;flex:0 0 20px;width:20px;height:20px;border-radius:50%;background:#18e0aa;color:#052e25!important;font-size:13px!important;font-weight:900}
+.master-sector-overview-label>strong{font-size:12px!important;line-height:1.2;color:#f3f8fc!important;font-weight:800;letter-spacing:0}
+.master-sector-overview>div:not(.master-sector-overview-label){padding-top:6px;padding-bottom:4px}
+.master-sector-overview>div:not(.master-sector-overview-label)>span{font-size:9px;color:#b3c6d7}
+.master-sector-overview>div:not(.master-sector-overview-label)>strong{font-size:23px;letter-spacing:-.4px}
+.master-sector-overall-progress{grid-template-columns:58px minmax(0,1fr);column-gap:10px}
+.master-sector-overall-progress>strong{font-size:16px!important;letter-spacing:0}
+.master-sector-overall-progress>small{font-size:9px;color:#d0dfeb}
+.master-sector-overall-progress .master-metric-track{grid-column:2;height:7px;margin-top:2px}
+.master-overdue-card{padding:10px 14px}
+.master-overdue-card>span{font-size:12px;letter-spacing:.1px}
+.master-overdue-card>strong{font-size:28px;font-weight:850;line-height:1.15}
+.master-overdue-card>small{font-size:9px}
+.master-sector-card-title>strong{font-size:12px;letter-spacing:.2px}
+.master-sector-values small{font-size:8px;color:#b7c8d7}
+.master-sector-values strong{font-weight:850;letter-spacing:-.4px}
+.master-sector-foot{font-size:8px;color:#c2d2df}
+.master-shift-daily .master-section-heading h2{font-size:13px;font-weight:800}
+.master-shift-chart{gap:10px}
+.master-shift-day{min-width:45px;flex-basis:45px}
+.master-shift-column>span{font-size:9px;font-weight:800}
+.master-daily-table-panel .master-section-heading{display:flex;align-items:center;min-height:23px}
+.master-daily-table-panel h2{font-size:12px;font-weight:800}
+.master-daily-table-panel .master-shift-table th{font-weight:800;letter-spacing:.05px}
+.master-daily-table-panel .master-shift-table td{font-size:10px}
+.master-daily-info .master-section-heading{display:flex;align-items:center;gap:8px;min-height:23px}
+.master-daily-info .master-daily-info-icon{display:grid;place-items:center;width:22px;height:22px;font-size:20px;line-height:1;color:#ffbf36}
+.master-daily-info .master-section-heading h2{font-size:12px;font-weight:800}
+.master-info-shifts article{min-height:54px}
+.master-info-shifts article>span{font-size:22px}
+.master-info-last{align-items:center}
+.master-info-last strong{line-height:1.35}
+@media(min-width:1181px){
+ .master-header{grid-template-columns:minmax(245px,1fr) auto auto}
+ .master-actions{display:flex}
+}
+@media(max-width:1180px){
+ .master-header{grid-template-columns:minmax(180px,1fr) auto}
+ .master-header-months{grid-column:2;grid-row:1}
+}
+@media(max-width:900px){
+ .master-sector-overview>.master-sector-overview-label{grid-column:1/-1}
+ .master-sector-summary-row{grid-template-columns:minmax(0,1fr)}
+ .master-overdue-card{min-height:80px}
+}
