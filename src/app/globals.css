@@ -2404,3 +2404,9 @@ tr:last-child td {
 .master-footer span{color:#6f91a9}
 @media(max-width:900px){.master-sector-overview-label{padding-bottom:8px!important}.master-overdue-card{min-height:90px}}
 @media(max-width:620px){.master-header-months .master-month-input-wrap{border-color:#31536d}.master-sector-overview{background:linear-gradient(145deg,#142b40,#101f30)}.master-sector-overdue{grid-column:auto}}
+
+
+.master-estamparia-mark{display:inline-grid;place-items:center;width:31px;height:31px;margin-right:8px;border-radius:7px;background:#dceeff;color:#153c65;font-size:20px;vertical-align:middle;box-shadow:0 2px 8px #0003}
+.master-intro h2{display:flex;align-items:center;gap:3px}
+.master-nav-icon{font-size:15px}
+.master-side-nav button:last-child .master-nav-icon{font-size:16px}
