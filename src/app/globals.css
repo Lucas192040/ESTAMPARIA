@@ -2618,3 +2618,21 @@ tr:last-child td {
  .master-radiador-cards .master-sector-values{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:9px}
  .master-radiador-cards .master-sector-values>div:nth-child(3){border-left:0;padding-left:0}
 }
+
+
+/* Correção final: Radiador usa a mesma grade e o mesmo tamanho de cartão da Estamparia */
+.master-sector-cards.master-radiador-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:0 0 10px}
+.master-radiador-cards .master-sector-card{min-width:0}
+.master-radiador-cards .master-sector-values{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.master-radiador-cards .master-sector-values>div{padding-right:3px}
+.master-radiador-cards .master-sector-values>div+div{padding-left:5px}
+@media(max-width:1200px){
+ .master-sector-cards.master-radiador-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+ .master-sector-cards.master-radiador-cards{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+ .master-radiador-cards .master-sector-values{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:9px}
+ .master-radiador-cards .master-sector-values>div:nth-child(3){border-left:0;padding-left:0}
+}
