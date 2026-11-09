@@ -19,7 +19,7 @@ function EstampariaSectors({rows,today}:{rows:Order[];today:string}){
  <section className="master-sector-cards">{metrics.map(m=><article className={"master-sector-card sector-"+m.color} key={m.id}><div className="master-sector-card-title"><span className="master-sector-symbol">{m.id===1?"▰":m.id===2?"◉":m.id===3?"▤":"▱"}</span><strong>{m.name}</strong><span className="master-metric-tag">● Produção</span></div><div className="master-sector-values"><div><small>Programada</small><strong>{n(m.planned)}</strong></div><div><small>Realizada</small><strong className="master-done">{n(m.done)}</strong></div><div><small>Pendente</small><strong className="master-pending">{n(m.pending)}</strong></div><div><small>Em Atraso</small><strong className="master-overdue-value">{n(m.overdue)}</strong></div></div><div className="master-metric-track"><span style={{width:m.percent+"%"}}/></div><div className="master-sector-foot"><span>{m.percent}% concluído</span><span>{n(m.planned)} previstas</span></div></article>)}</section></>;
 }
 
-function ShiftDailyChart({rows,activity}:{rows:ShiftDay[];activity:string|null}){
+function ShiftDailyChart({rows,activity,processName="Estamparia"}:{rows:ShiftDay[];activity:string|null;processName?:string}){
  const saved=shift(activity);
  const total1=rows.reduce((sum,x)=>sum+x.first,0),total2=rows.reduce((sum,x)=>sum+x.second,0);
  const peak=Math.max(0,...rows.map(x=>Math.max(x.first,x.second)));
@@ -27,7 +27,7 @@ function ShiftDailyChart({rows,activity}:{rows:ShiftDay[];activity:string|null})
  const ticks=[chartMax,Math.round(chartMax*2/3/500)*500,Math.round(chartMax/3/500)*500,0];
  const height=(value:number)=>Math.max(value>0?2:0,value/chartMax*100);
  return <><section className="master-shift-daily">
-  <div className="master-section-heading"><div><span className="master-kicker">PRODUÇÃO POR DIA E TURNO</span><h2>Produção por Dia e Turno</h2></div><div className="master-shift-chart-legend"><span><i className="first-dot"/>1º Turno</span><span><i className="second-dot"/>2º Turno</span></div></div>
+  <div className="master-section-heading"><div><span className="master-kicker">PRODUÇÃO POR DIA E TURNO</span><h2>Produção por Dia e Turno – {processName}</h2></div><div className="master-shift-chart-legend"><span><i className="first-dot"/>1º Turno</span><span><i className="second-dot"/>2º Turno</span></div></div>
   {rows.length===0?<p className="master-shift-empty">Ainda não há produção concluída registrada neste mês.</p>:<div className="master-shift-chart-shell">
    <div className="master-shift-y-axis">{ticks.map((tick,index)=><span key={index}>{n(tick)}</span>)}</div>
    <div className="master-shift-chart-plot"><div className="master-shift-grid-lines"><i/><i/><i/><i/></div>
@@ -40,12 +40,12 @@ function ShiftDailyChart({rows,activity}:{rows:ShiftDay[];activity:string|null})
    </div>
   </div>}
  </section>
- <div className="master-daily-bottom"><section className="master-daily-table-panel"><div className="master-section-heading"><div><span className="master-kicker">ACOMPANHAMENTO DIÁRIO</span><h2>Resumo Diário da Estamparia</h2></div></div>
+ <div className="master-daily-bottom"><section className="master-daily-table-panel"><div className="master-section-heading"><div><span className="master-kicker">ACOMPANHAMENTO DIÁRIO</span><h2>Resumo Diário – {processName}</h2></div></div>
   <div className="master-shift-table-wrap"><table className="master-shift-table"><thead><tr><th>Data</th><th>1º Turno (07:00–17:15)</th><th>2º Turno (17:20–02:48)</th><th>Total do Dia</th></tr></thead><tbody>{rows.map(x=><tr key={x.date}><td>{date(x.date)}</td><td>{n(x.first)}</td><td>{n(x.second)}</td><td><strong>{n(x.total)}</strong></td></tr>)}</tbody></table></div>
  </section>
  <aside className="master-daily-info"><div className="master-section-heading"><div><span className="master-daily-info-icon">☼</span><h2>Informações Importantes</h2></div></div>
   <div className="master-info-shifts"><article><span>◷</span><div><b>1º Turno</b><strong>07:00 às 17:15</strong></div></article><article><span>◷</span><div><b>2º Turno</b><strong>17:20 às 02:48</strong></div></article></div>
-  <div className="master-info-last"><span className="master-info-check">✓</span><div><b>Último registro da Estamparia:</b><strong>{saved.label==="Sem apontamento"?"Nenhum apontamento registrado":saved.date+" às "+saved.time+" – "+saved.label}</strong></div></div>
+  <div className="master-info-last"><span className="master-info-check">✓</span><div><b>Último registro de {processName}:</b><strong>{saved.label==="Sem apontamento"?"Nenhum apontamento registrado":saved.date+" às "+saved.time+" – "+saved.label}</strong></div></div>
  </aside></div></>;
 }
 
@@ -103,7 +103,7 @@ function MasterOverviewTurnos(){
   <p>O último registro de cada processo aparece no respectivo cartão acima.</p>
  </aside>;
 }
-function RadiadorMasterPanel({rows,today,activity,selectedMonth}:{rows:Order[];today:string;activity:string|null;selectedMonth:string}){
+function RadiadorMasterPanel({rows,today,activity,selectedMonth,shiftRows}:{rows:Order[];today:string;activity:string|null;selectedMonth:string;shiftRows:ShiftDay[]}){
  let planned=0,done=0,overduePieces=0,overdueCount=0,completed=0,inProgress=0,noNeed=0,notStarted=0;
  const byDate=new Map<string,DailyProduction>();
  for(const order of rows)for(const p of order.programacoes){
@@ -124,10 +124,10 @@ function RadiadorMasterPanel({rows,today,activity,selectedMonth}:{rows:Order[];t
   <section className="master-sector-cards master-radiador-cards">
    <MasterProductionCard name="RADIADOR" planned={planned} done={done} overdue={overduePieces} color="blue" icon="▤"/>
   </section>
-  <MasterDailyHistory rows={daily} activity={activity} processName="Radiador"/>
+  <ShiftDailyChart rows={shiftRows} activity={activity} processName="Radiador"/>
  </>;
 }
-function FerragemMasterPanel({rows,today,activity,selectedMonth}:{rows:F[];today:string;activity:string|null;selectedMonth:string}){
+function FerragemMasterPanel({rows,today,activity,selectedMonth,shiftRows}:{rows:F[];today:string;activity:string|null;selectedMonth:string;shiftRows:ShiftDay[]}){
  const monthRows=rows.filter(r=>r.data_programada.startsWith(selectedMonth));
  const defs=[{key:"viga_superior" as const,name:"VIGA SUPERIOR",color:"blue",icon:"▰"},{key:"viga_inferior" as const,name:"VIGA INFERIOR",color:"purple",icon:"▱"},{key:"dobradeira_superior" as const,name:"DOBRADEIRA SUPERIOR",color:"cyan",icon:"▰"},{key:"dobradeira_inferior" as const,name:"DOBRADEIRA INFERIOR",color:"amber",icon:"▱"}];
  const metrics=defs.map(d=>{let planned=0,done=0,overdue=0;for(const r of monthRows){const qty=Number(r.qtd_programada||0),actual=Math.min(qty,Number(r[d.key]||0));planned+=qty;done+=actual;if(r.data_programada<today)overdue+=Math.max(0,qty-actual);}return {...d,planned,done,overdue,pending:Math.max(0,planned-done),percent:planned?Math.min(100,Math.round(done/planned*100)):0};});
@@ -144,7 +144,7 @@ function FerragemMasterPanel({rows,today,activity,selectedMonth}:{rows:F[];today
  const daily=[...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date));
  return <><MasterSummary planned={planned} done={done} pending={pending} percent={percent} overduePieces={overduePieces} overdueCount={overdueCount}/>
   <section className="master-sector-cards">{metrics.map(m=><MasterProductionCard key={m.key} name={m.name} planned={m.planned} done={m.done} overdue={m.overdue} color={m.color} icon={m.icon}/>)}</section>
-  <MasterDailyHistory rows={daily} activity={activity} processName="Ferragem"/>
+  <ShiftDailyChart rows={shiftRows} activity={activity} processName="Ferragem"/>
  </>;
 }
 
@@ -157,8 +157,8 @@ function Metric({title,t,detail}:{title:string;t:T;detail:string}){const pc=t.pl
 function Chart({items}:{items:{name:string;p:number;d:number}[]}){const max=Math.max(1,...items.map(x=>x.p));return <section className="master-chart-panel"><div className="master-section-heading"><div><span className="master-kicker">COMPARATIVO</span><h2>Programado x realizado</h2><p>Comparação das quantidades no período selecionado</p></div><div className="master-legend"><span><i className="planned-dot"/>Programado</span><span><i className="done-dot"/>Realizado</span></div></div><div className="master-chart">{items.map(x=><div className="master-chart-row" key={x.name}><strong>{x.name}</strong><div className="master-chart-bars"><div className="master-chart-track"><span className="master-chart-planned" style={{width:x.p/max*100+"%"}}/></div><div className="master-chart-track"><span className="master-chart-done" style={{width:x.d/max*100+"%"}}/></div></div><div className="master-chart-numbers"><b>{n(x.p)}</b><b>{n(x.d)}</b></div></div>)}</div></section>}
 
 export default function MasterDashboard(){
- const [daily,setDaily]=useState<DailyDataset|null>(null),[ferr,setFerr]=useState<F[]>([]),[activity,setActivity]=useState<Activity|null>(null),[shiftDaily,setShiftDaily]=useState<ShiftDay[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[selectedMonth,setSelectedMonth]=useState(()=>new Date().toLocaleDateString("en-CA",{timeZone:"America/Manaus"}).slice(0,7)),[view,setView]=useState<View>("estamparia");
- const reload=useCallback(async()=>{setLoading(true);setError("");try{const [d,f,a,s]=await Promise.all([fetchJson<DailyDataset>("/api/ops?dataset=1&fresh=1"),fetchJson<{rows:F[]}>("/api/ferragem"),fetchJson<Activity>("/api/master/activity"),fetchJson<{rows:ShiftDay[]}>("/api/master/estamparia/turnos")]);setDaily(d);setFerr(f.rows??[]);setActivity(a);setShiftDaily(s.rows??[])}catch(e){setError((e as Error).message)}finally{setLoading(false)}},[]);
+ const [daily,setDaily]=useState<DailyDataset|null>(null),[ferr,setFerr]=useState<F[]>([]),[activity,setActivity]=useState<Activity|null>(null),[shiftDaily,setShiftDaily]=useState<ShiftDay[]>([]),[processShiftDaily,setProcessShiftDaily]=useState<{radiador:ShiftDay[];ferragem:ShiftDay[]}>({radiador:[],ferragem:[]}),[loading,setLoading]=useState(true),[error,setError]=useState(""),[selectedMonth,setSelectedMonth]=useState(()=>new Date().toLocaleDateString("en-CA",{timeZone:"America/Manaus"}).slice(0,7)),[view,setView]=useState<View>("estamparia");
+ const reload=useCallback(async()=>{setLoading(true);setError("");try{const [d,f,a,s,processos]=await Promise.all([fetchJson<DailyDataset>("/api/ops?dataset=1&fresh=1"),fetchJson<{rows:F[]}>("/api/ferragem"),fetchJson<Activity>("/api/master/activity"),fetchJson<{rows:ShiftDay[]}>("/api/master/estamparia/turnos"),fetchJson<{radiador:ShiftDay[];ferragem:ShiftDay[]}>("/api/master/processos/turnos")]);setDaily(d);setFerr(f.rows??[]);setActivity(a);setShiftDaily(s.rows??[]);setProcessShiftDaily({radiador:processos.radiador??[],ferragem:processos.ferragem??[]})}catch(e){setError((e as Error).message)}finally{setLoading(false)}},[]);
  useEffect(()=>{void reload()},[reload]);
  useEffect(()=>{const timer=window.setInterval(()=>{void fetchJson<Activity>("/api/master/activity").then(setActivity).catch(()=>{});},60000);return()=>window.clearInterval(timer);},[]);
  const today=daily?.today??new Date().toLocaleDateString("en-CA",{timeZone:"America/Manaus"}),month=today.slice(0,7),match=(v:string)=>String(v).startsWith(selectedMonth);
@@ -184,7 +184,7 @@ export default function MasterDashboard(){
    <MasterOverviewCard name="FERRAGEM" planned={ft.planned} done={ft.done} color="amber" icon="⚒" activity={activity?.ferragem??null} onOpen={()=>setView("ferragem")}/>
   </section>
   <div className="master-overview-lower"><Chart items={[{name:"Estamparia",p:et.planned,d:et.done},{name:"Radiador",p:rt.planned,d:rt.done},{name:"Ferragem",p:ft.planned,d:ft.done}]}/><MasterOverviewTurnos/></div>
- </>} {view==="estamparia"&&<><EstampariaSectors rows={est} today={today}/><ShiftDailyChart rows={shiftDaily.filter(x=>x.date.startsWith(selectedMonth))} activity={activity?.estamparia??null}/></>}{view==="radiador"&&<RadiadorMasterPanel rows={rad} today={today} activity={activity?.radiador??null} selectedMonth={selectedMonth}/>}{view==="ferragem"&&<FerragemMasterPanel rows={ff} today={today} activity={activity?.ferragem??null} selectedMonth={selectedMonth}/>}
+ </>} {view==="estamparia"&&<><EstampariaSectors rows={est} today={today}/><ShiftDailyChart rows={shiftDaily.filter(x=>x.date.startsWith(selectedMonth))} activity={activity?.estamparia??null}/></>}{view==="radiador"&&<RadiadorMasterPanel rows={rad} today={today} activity={activity?.radiador??null} selectedMonth={selectedMonth} shiftRows={processShiftDaily.radiador.filter(x=>x.date.startsWith(selectedMonth))}/>}{view==="ferragem"&&<FerragemMasterPanel rows={ff} today={today} activity={activity?.ferragem??null} selectedMonth={selectedMonth} shiftRows={processShiftDaily.ferragem.filter(x=>x.date.startsWith(selectedMonth))}/>}
  </>}
  <footer className="master-footer">ITAM · Painel MASTER <span>Somente consulta · sem permissão para apontamentos</span></footer></div></div></main>;
 }
