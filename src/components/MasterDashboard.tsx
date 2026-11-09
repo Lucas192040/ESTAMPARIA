@@ -124,11 +124,6 @@ function RadiadorMasterPanel({rows,today,activity,selectedMonth}:{rows:Order[];t
   <section className="master-sector-cards master-radiador-cards">
    <MasterProductionCard name="RADIADOR" planned={planned} done={done} overdue={overduePieces} color="blue" icon="▤"/>
   </section>
-  <section className="master-sector-cards master-radiador-status-cards">
-   <MasterCountCard name="CONCLUÍDAS" value={completed} caption="Programações finalizadas" color="purple" icon="✓"/>
-   <MasterCountCard name="EM ANDAMENTO" value={inProgress} caption="Programações com produção iniciada" color="cyan" icon="◷"/>
-   <MasterCountCard name="SEM NECESSIDADE" value={noNeed} caption="Programações liberadas do Radiador" color="amber" icon="○"/>
-  </section>
   <MasterDailyHistory rows={daily} activity={activity} processName="Radiador"/>
  </>;
 }
