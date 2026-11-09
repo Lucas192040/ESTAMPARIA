@@ -2605,3 +2605,16 @@ tr:last-child td {
  .master-sector-cards:not(.master-radiador-cards) .master-sector-values{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:9px}
  .master-sector-cards:not(.master-radiador-cards) .master-sector-values>div:nth-child(3){border-left:0;padding-left:0}
 }
+
+
+/* Padronização dos cartões de indicadores do Master */
+.master-sector-cards.master-radiador-cards{grid-template-columns:minmax(0,1fr)}
+.master-radiador-cards .master-sector-values{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.master-radiador-cards .master-sector-values>div{padding-right:3px}
+.master-radiador-cards .master-sector-values>div+div{padding-left:5px}
+.master-sector-cards:not(.master-radiador-cards) .master-sector-values .master-overdue-value,
+.master-radiador-cards .master-sector-values .master-overdue-value{color:#ff786d!important}
+@media(max-width:620px){
+ .master-radiador-cards .master-sector-values{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:9px}
+ .master-radiador-cards .master-sector-values>div:nth-child(3){border-left:0;padding-left:0}
+}
