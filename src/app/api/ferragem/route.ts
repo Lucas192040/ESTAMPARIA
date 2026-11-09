@@ -7,6 +7,31 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 const norm=(v:unknown)=>String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const txt=(v:unknown)=>String(v??"").trim();
+function parsePotencia(v:unknown):number {
+ if(typeof v==="number"){if(Number.isFinite(v)&&v>=0)return v;throw Error("Potência PA inválida.");}
+ let s=txt(v).normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/\\s+/g,"").replace(/kva|va/gi,"").replace(/\\(monofasico\\)/gi,"");
+ if(!s||!/^[+]?\\d[\\d.,]*$/.test(s))throw Error("Potência PA inválida.");
+ const commas=(s.match(/,/g)||[]).length,dots=(s.match(/\\./g)||[]).length;
+ if(commas&&dots){
+  const decimal=s.lastIndexOf(",")>s.lastIndexOf(".")?",":".";
+  const thousands=decimal===","?".":",";
+  s=s.split(thousands).join("");
+  if(decimal===",")s=s.replace(",",".");
+ }else if(commas){
+  if(commas>1){const parts=s.split(",");s=parts.slice(0,-1).join("")+"."+parts[parts.length-1];}
+  else s=s.replace(",",".");
+ }else if(dots>1){
+  const parts=s.split("."),last=parts[parts.length-1];
+  if(parts.slice(1,-1).every(p=>p.length===3)&&last.length===3)s=parts.join("");
+  else s=parts.slice(0,-1).join("")+"."+last;
+ }else if(dots===1){
+  const [whole,frac]=s.split(".");
+  if(frac.length===3&&whole.length<=3)s=whole+frac;
+ }
+ const n=Number(s);
+ if(!Number.isFinite(n)||n<0)throw Error("Potência PA inválida.");
+ return n;
+}
 function excelDate(v:unknown, date1904=false):string {
  let y:number,m:number,d:number;
  if(typeof v==="number"){const p=XLSX.SSF.parse_date_code(v,{date1904});if(!p)throw Error("Data programada inválida.");({y,m,d}=p);}
@@ -26,7 +51,7 @@ function parse(buffer:Buffer,filename:string){
  for(let i=header+1;i<rows.length;i++){const r=rows[i];if(r.every((v:any)=>v==null||txt(v)===""))continue;try{
  const c=ix.map((j:number)=>r[j]);const op=txt(c[0]),parent=txt(c[1]);if(!op||!parent)throw Error("Nro OP e OP-Pai são obrigatórios.");
  const qty=integer(c[8],"Qtd.Programada",1),si=integer(c[9],"Série Inicial"),sf=integer(c[10],"Série Final");if(sf-si+1!==qty)throw Error("Intervalo de séries não confere com Qtd.Programada.");
- const potencyText=txt(c[15]).replace(/\s*kva\b/i,"").replace(/\s*\(monof[aá]sico\)\s*/i,"").replace(",", ".").trim();const potency=Number(potencyText);if(!potencyText||!Number.isFinite(potency)||potency<0)throw Error("Potência PA inválida.");
+ const potency=parsePotencia(c[15]);
  out.push({nro_op:op,op_pai:parent,cod_cli:txt(c[2]),nome_cliente:txt(c[3]),status_op:txt(c[4]),data_programada:excelDate(c[5],!!wb.Workbook?.WBProps?.date1904),atividade:txt(c[6]),descr_atividade:txt(c[7])||"FERRAGEM",qtd_programada:qty,serie_inicial:si,serie_final:sf,dia_semana:txt(c[11]),produto:txt(c[12]),descr_produto:txt(c[13]),referencia_prod:txt(c[14]),potencia_pa:potency,linha_prod:txt(c[16]),qtd_op:integer(c[17],"Qtd.OP"),qtd_op_pai:integer(c[18],"Qtd.OP-Pai"),qtd_apontada_erp:integer(c[19],"Qtd.Apontada")});
  }catch(e){throw Error("Linha "+(i+1)+": "+(e as Error).message);}}
  if(out.length>10000)throw Error("A planilha excede o limite de 10.000 programações.");if(!out.length)throw Error("A planilha não contém programações.");
