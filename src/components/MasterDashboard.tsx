@@ -59,10 +59,10 @@ function MasterSummary({planned,done,pending,percent,overduePieces,overdueCount}
   <div className="master-sector-overall-progress"><strong style={{background:`conic-gradient(#19ddb0 ${percent}%, #244b66 ${percent}%)`}}>{percent}%</strong><small>Conclusão do Mês</small><div className="master-metric-track"><span style={{width:percent+"%"}}/></div></div>
  </section><aside className="master-overdue-card"><span>💡 Peças Atrasadas</span><strong>{n(overduePieces)}</strong><small>{n(overdueCount)} programações vencidas</small></aside></div>;
 }
-function MasterProductionCard({name,planned,done,color,icon}:{name:string;planned:number;done:number;color:string;icon:string}){
+function MasterProductionCard({name,planned,done,overdue,color,icon}:{name:string;planned:number;done:number;overdue:number;color:string;icon:string}){
  const pending=Math.max(0,planned-done),percent=planned?Math.min(100,Math.round(done/planned*100)):0;
  return <article className={"master-sector-card sector-"+color}><div className="master-sector-card-title"><span className="master-sector-symbol">{icon}</span><strong>{name}</strong><span className="master-metric-tag">● Produção</span></div>
-  <div className="master-sector-values"><div><small>Programada</small><strong>{n(planned)}</strong></div><div><small>Realizada</small><strong className="master-done">{n(done)}</strong></div><div><small>Pendente</small><strong className="master-pending">{n(pending)}</strong></div></div>
+  <div className="master-sector-values"><div><small>Programada</small><strong>{n(planned)}</strong></div><div><small>Realizada</small><strong className="master-done">{n(done)}</strong></div><div><small>Pendente</small><strong className="master-pending">{n(pending)}</strong></div><div><small>Em Atraso</small><strong className="master-overdue-value">{n(overdue)}</strong></div></div>
   <div className="master-metric-track"><span style={{width:percent+"%"}}/></div><div className="master-sector-foot"><span>{percent}% concluído</span><span>{n(planned)} previstas</span></div>
  </article>;
 }
@@ -122,7 +122,9 @@ function RadiadorMasterPanel({rows,today,activity,selectedMonth}:{rows:Order[];t
  const daily=[...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date));
  return <><MasterSummary planned={planned} done={done} pending={pending} percent={percent} overduePieces={overduePieces} overdueCount={overdueCount}/>
   <section className="master-sector-cards master-radiador-cards">
-   <MasterCountCard name="RADIADOR" value={planned} caption="Peças previstas para o processo" color="blue" icon="▤"/>
+   <MasterProductionCard name="RADIADOR" planned={planned} done={done} overdue={overduePieces} color="blue" icon="▤"/>
+  </section>
+  <section className="master-sector-cards master-radiador-status-cards">
    <MasterCountCard name="CONCLUÍDAS" value={completed} caption="Programações finalizadas" color="purple" icon="✓"/>
    <MasterCountCard name="EM ANDAMENTO" value={inProgress} caption="Programações com produção iniciada" color="cyan" icon="◷"/>
    <MasterCountCard name="SEM NECESSIDADE" value={noNeed} caption="Programações liberadas do Radiador" color="amber" icon="○"/>
@@ -133,7 +135,7 @@ function RadiadorMasterPanel({rows,today,activity,selectedMonth}:{rows:Order[];t
 function FerragemMasterPanel({rows,today,activity,selectedMonth}:{rows:F[];today:string;activity:string|null;selectedMonth:string}){
  const monthRows=rows.filter(r=>r.data_programada.startsWith(selectedMonth));
  const defs=[{key:"viga_superior" as const,name:"VIGA SUPERIOR",color:"blue",icon:"▰"},{key:"viga_inferior" as const,name:"VIGA INFERIOR",color:"purple",icon:"▱"},{key:"dobradeira_superior" as const,name:"DOBRADEIRA SUPERIOR",color:"cyan",icon:"▰"},{key:"dobradeira_inferior" as const,name:"DOBRADEIRA INFERIOR",color:"amber",icon:"▱"}];
- const metrics=defs.map(d=>{const planned=monthRows.reduce((s,r)=>s+Number(r.qtd_programada||0),0),done=monthRows.reduce((s,r)=>s+Math.min(Number(r.qtd_programada||0),Number(r[d.key]||0)),0);return {...d,planned,done,pending:Math.max(0,planned-done),percent:planned?Math.min(100,Math.round(done/planned*100)):0};});
+ const metrics=defs.map(d=>{let planned=0,done=0,overdue=0;for(const r of monthRows){const qty=Number(r.qtd_programada||0),actual=Math.min(qty,Number(r[d.key]||0));planned+=qty;done+=actual;if(r.data_programada<today)overdue+=Math.max(0,qty-actual);}return {...d,planned,done,overdue,pending:Math.max(0,planned-done),percent:planned?Math.min(100,Math.round(done/planned*100)):0};});
  const planned=metrics.reduce((s,m)=>s+m.planned,0),done=metrics.reduce((s,m)=>s+m.done,0),pending=Math.max(0,planned-done),percent=planned?Math.min(100,Math.round(done/planned*100)):0;
  let overduePieces=0,overdueCount=0;
  const byDate=new Map<string,DailyProduction>();
@@ -146,7 +148,7 @@ function FerragemMasterPanel({rows,today,activity,selectedMonth}:{rows:F[];today
  }
  const daily=[...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date));
  return <><MasterSummary planned={planned} done={done} pending={pending} percent={percent} overduePieces={overduePieces} overdueCount={overdueCount}/>
-  <section className="master-sector-cards">{metrics.map(m=><MasterProductionCard key={m.key} name={m.name} planned={m.planned} done={m.done} color={m.color} icon={m.icon}/>)}</section>
+  <section className="master-sector-cards">{metrics.map(m=><MasterProductionCard key={m.key} name={m.name} planned={m.planned} done={m.done} overdue={m.overdue} color={m.color} icon={m.icon}/>)}</section>
   <MasterDailyHistory rows={daily} activity={activity} processName="Ferragem"/>
  </>;
 }
