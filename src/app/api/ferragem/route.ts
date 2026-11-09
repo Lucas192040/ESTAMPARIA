@@ -9,9 +9,9 @@ const norm=(v:unknown)=>String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/
 const txt=(v:unknown)=>String(v??"").trim();
 function parsePotencia(v:unknown):number {
  if(typeof v==="number"){if(Number.isFinite(v)&&v>=0)return v;throw Error("Potência PA inválida.");}
- let s=txt(v).normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/\\s+/g,"").replace(/kva|va/gi,"").replace(/\\(monofasico\\)/gi,"");
- if(!s||!/^[+]?\\d[\\d.,]*$/.test(s))throw Error("Potência PA inválida.");
- const commas=(s.match(/,/g)||[]).length,dots=(s.match(/\\./g)||[]).length;
+ let s=txt(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"").replace(/kva|va/gi,"").replace(/\(monofasico\)/gi,"");
+ if(!s||!/^[+]?\d[\d.,]*$/.test(s))throw Error("Potência PA inválida.");
+ const commas=(s.match(/,/g)||[]).length,dots=(s.match(/\./g)||[]).length;
  if(commas&&dots){
   const decimal=s.lastIndexOf(",")>s.lastIndexOf(".")?",":".";
   const thousands=decimal===","?".":",";
