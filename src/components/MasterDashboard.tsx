@@ -174,7 +174,10 @@ export default function MasterDashboard(){
  const etp=est.reduce((s,r)=>s+r.programacoes.reduce((a,p)=>a+p.qtd_programada*4,0),0),etd=est.reduce((s,r)=>s+r.programacoes.reduce((a,p)=>a+p.setores.reduce((v,x)=>v+Number(x.qtd_apontada||0),0),0),0),et:T={planned:etp,done:etd,pending:Math.max(0,etp-etd),orders:est.length},rp=rad.reduce((s,r)=>s+r.programacoes.reduce((a,p)=>a+(p.radiador_nao_necessario?0:p.qtd_programada),0),0),rd=rad.reduce((s,r)=>s+r.programacoes.reduce((a,p)=>a+(p.radiador_nao_necessario?0:Math.min(p.qtd_programada,p.radiador?.qtd_apontada??0)),0),0),rt:T={planned:rp,done:rd,pending:Math.max(0,rp-rd),orders:rad.length};
  const fp=ff.reduce((s,r)=>s+Number(r.qtd_programada||0)*4,0),fd=ff.reduce((s,r)=>s+Math.min(Number(r.qtd_programada||0),Number(r.viga_superior||0))+Math.min(Number(r.qtd_programada||0),Number(r.viga_inferior||0))+Math.min(Number(r.qtd_programada||0),Number(r.dobradeira_superior||0))+Math.min(Number(r.qtd_programada||0),Number(r.dobradeira_inferior||0)),0),ft:T={planned:fp,done:fd,pending:Math.max(0,fp-fd),orders:ff.length};
  const all={p:et.planned+rt.planned+ft.planned,d:et.done+rt.done+ft.done,pending:et.pending+rt.pending+ft.pending},pct=all.p?Math.min(100,Math.round(all.d/all.p*100)):0;
- const estAll=base.filter(r=>!String(r.linha_prod).toUpperCase().startsWith("TRI"));
+ // Para o indicador de atrasos, incluir também linhas TRI que tenham
+ // apontamentos reais nos subsetores da Estamparia. O filtro mensal da tela
+ // continua separado e não altera os totais de produção dos outros processos.
+ const estAll=base.filter(r=>r.programacoes.some(p=>p.setores.length>0));
  const estOverdue=estAll.flatMap(r=>r.programacoes).filter(p=>p.data_programada<today&&[1,2,3,4].some(id=>{
   const qty=Number(p.qtd_programada||0),actual=Number(p.setores.find(s=>s.subsetor_id===id)?.qtd_apontada||0);
   return Math.max(0,qty-Math.min(qty,actual))>0;
