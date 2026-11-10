@@ -9,13 +9,13 @@ type View="overview"|"estamparia"|"radiador"|"ferragem";
 type Activity={estamparia:string|null;radiador:string|null;ferragem:string|null;timezone:string};
 type ShiftDay={date:string;first:number;second:number;total:number};
 type SectorMetric={name:string;planned:number;done:number;pending:number;overdue:number;percent:number;id:number;color:string};
-function EstampariaSectors({rows,today}:{rows:Order[];today:string}){
+function EstampariaSectors({rows,overdueRows=rows,today}:{rows:Order[];overdueRows?:Order[];today:string}){
  const defs=[{id:1,name:"CORPO",color:"blue"},{id:2,name:"FUNDO",color:"purple"},{id:3,name:"TAMPA",color:"cyan"},{id:4,name:"TAMPA BORDEADA",color:"amber"}];
- const metrics:SectorMetric[]=defs.map(d=>{let planned=0,done=0,overdue=0;for(const order of rows)for(const p of order.programacoes){const qty=Number(p.qtd_programada||0),actual=Number(p.setores.find(s=>s.subsetor_id===d.id)?.qtd_apontada||0);planned+=qty;done+=actual;if(p.data_programada<today)overdue+=Math.max(0,qty-Math.min(qty,actual));}return {...d,planned,done,pending:Math.max(0,planned-done),overdue,percent:planned?Math.min(100,Math.round(done/planned*100)):0}});
+ const metrics:SectorMetric[]=defs.map(d=>{let planned=0,done=0,overdue=0;for(const order of rows)for(const p of order.programacoes){const qty=Number(p.qtd_programada||0),actual=Number(p.setores.find(s=>s.subsetor_id===d.id)?.qtd_apontada||0);planned+=qty;done+=actual;}for(const order of overdueRows)for(const p of order.programacoes){const qty=Number(p.qtd_programada||0),actual=Number(p.setores.find(s=>s.subsetor_id===d.id)?.qtd_apontada||0);if(p.data_programada<today)overdue+=Math.max(0,qty-Math.min(qty,actual));}return {...d,planned,done,pending:Math.max(0,planned-done),overdue,percent:planned?Math.min(100,Math.round(done/planned*100)):0}});
  const planned=metrics.reduce((sum,m)=>sum+m.planned,0),done=metrics.reduce((sum,m)=>sum+m.done,0),pending=Math.max(0,planned-done),percent=planned?Math.min(100,Math.round(done/planned*100)):0;
- // Atraso da Estamparia é calculado por subsetor. Usar o menor apontamento
- // entre os quatro setores escondia o saldo específico da TAMPA BORDEADA.
- const overdue=rows.flatMap(order=>order.programacoes).filter(p=>p.data_programada<today&&defs.some(d=>{
+ // Atrasos são apurados em todas as programações vencidas, mesmo quando
+ // pertencem a um mês anterior ao mês selecionado no painel.
+ const overdue=overdueRows.flatMap(order=>order.programacoes).filter(p=>p.data_programada<today&&defs.some(d=>{
   const qty=Number(p.qtd_programada||0),actual=Number(p.setores.find(s=>s.subsetor_id===d.id)?.qtd_apontada||0);
   return Math.max(0,qty-Math.min(qty,actual))>0;
  }));
@@ -174,7 +174,8 @@ export default function MasterDashboard(){
  const etp=est.reduce((s,r)=>s+r.programacoes.reduce((a,p)=>a+p.qtd_programada*4,0),0),etd=est.reduce((s,r)=>s+r.programacoes.reduce((a,p)=>a+p.setores.reduce((v,x)=>v+Number(x.qtd_apontada||0),0),0),0),et:T={planned:etp,done:etd,pending:Math.max(0,etp-etd),orders:est.length},rp=rad.reduce((s,r)=>s+r.programacoes.reduce((a,p)=>a+(p.radiador_nao_necessario?0:p.qtd_programada),0),0),rd=rad.reduce((s,r)=>s+r.programacoes.reduce((a,p)=>a+(p.radiador_nao_necessario?0:Math.min(p.qtd_programada,p.radiador?.qtd_apontada??0)),0),0),rt:T={planned:rp,done:rd,pending:Math.max(0,rp-rd),orders:rad.length};
  const fp=ff.reduce((s,r)=>s+Number(r.qtd_programada||0)*4,0),fd=ff.reduce((s,r)=>s+Math.min(Number(r.qtd_programada||0),Number(r.viga_superior||0))+Math.min(Number(r.qtd_programada||0),Number(r.viga_inferior||0))+Math.min(Number(r.qtd_programada||0),Number(r.dobradeira_superior||0))+Math.min(Number(r.qtd_programada||0),Number(r.dobradeira_inferior||0)),0),ft:T={planned:fp,done:fd,pending:Math.max(0,fp-fd),orders:ff.length};
  const all={p:et.planned+rt.planned+ft.planned,d:et.done+rt.done+ft.done,pending:et.pending+rt.pending+ft.pending},pct=all.p?Math.min(100,Math.round(all.d/all.p*100)):0;
- const estOverdue=est.flatMap(r=>r.programacoes).filter(p=>p.data_programada<today&&[1,2,3,4].some(id=>{
+ const estAll=base.filter(r=>!String(r.linha_prod).toUpperCase().startsWith("TRI"));
+ const estOverdue=estAll.flatMap(r=>r.programacoes).filter(p=>p.data_programada<today&&[1,2,3,4].some(id=>{
   const qty=Number(p.qtd_programada||0),actual=Number(p.setores.find(s=>s.subsetor_id===id)?.qtd_apontada||0);
   return Math.max(0,qty-Math.min(qty,actual))>0;
  }));
@@ -198,7 +199,7 @@ export default function MasterDashboard(){
    <MasterOverviewCard name="FERRAGEM" planned={ft.planned} done={ft.done} color="amber" icon="⚒" activity={activity?.ferragem??null} onOpen={()=>setView("ferragem")}/>
   </section>
   <div className="master-overview-lower"><Chart items={[{name:"Estamparia",p:et.planned,d:et.done},{name:"Radiador",p:rt.planned,d:rt.done},{name:"Ferragem",p:ft.planned,d:ft.done}]}/><MasterOverviewTurnos/></div>
- </>} {view==="estamparia"&&<><EstampariaSectors rows={est} today={today}/><ShiftDailyChart rows={shiftDaily.filter(x=>x.date.startsWith(selectedMonth))} activity={activity?.estamparia??null}/></>}{view==="radiador"&&<RadiadorMasterPanel rows={rad} today={today} activity={activity?.radiador??null} selectedMonth={selectedMonth} shiftRows={processShiftDaily.radiador.filter(x=>x.date.startsWith(selectedMonth))}/>}{view==="ferragem"&&<FerragemMasterPanel rows={ff} today={today} activity={activity?.ferragem??null} selectedMonth={selectedMonth} shiftRows={processShiftDaily.ferragem.filter(x=>x.date.startsWith(selectedMonth))}/>}
+ </>} {view==="estamparia"&&<><EstampariaSectors rows={est} overdueRows={estAll} today={today}/><ShiftDailyChart rows={shiftDaily.filter(x=>x.date.startsWith(selectedMonth))} activity={activity?.estamparia??null}/></>}{view==="radiador"&&<RadiadorMasterPanel rows={rad} today={today} activity={activity?.radiador??null} selectedMonth={selectedMonth} shiftRows={processShiftDaily.radiador.filter(x=>x.date.startsWith(selectedMonth))}/>}{view==="ferragem"&&<FerragemMasterPanel rows={ff} today={today} activity={activity?.ferragem??null} selectedMonth={selectedMonth} shiftRows={processShiftDaily.ferragem.filter(x=>x.date.startsWith(selectedMonth))}/>}
  </>}
  <footer className="master-footer">ITAM · Painel MASTER <span>Somente consulta · sem permissão para apontamentos</span></footer></div></div></main>;
 }
