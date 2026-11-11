@@ -2,7 +2,7 @@ import { z } from "zod";
 import { guard, answer, failure, limitedBody, ApiError } from "@/lib/server";
 import { setSession, verifyCredentials } from "@/lib/auth";
 export const runtime = "nodejs";
-const schema = z.object({ role: z.enum(["estamparia", "radiador", "ferragem", "master"]), password: z.string().min(1).max(256) });
+const schema = z.object({ role: z.enum(["estamparia", "radiador", "ferragem", "solda", "master"]), password: z.string().min(1).max(256) });
 export async function POST(req: Request) {
   try {
     await guard(req, "auth");
