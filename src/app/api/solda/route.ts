@@ -24,7 +24,7 @@ function parse(buffer:Buffer,filename:string){
  const {rows,header,ix}=matches[0],out:any[]=[];let ignoradas=0;
  for(let i=header+1;i<rows.length;i++){const r=rows[i];if(r.every((v:any)=>v==null||txt(v)===""))continue;const c=ix.map((j:number)=>r[j]);const produto=txt(c[13]).toUpperCase();if(!produto.startsWith("TANQUE")){ignoradas++;continue;}
  try{const op=txt(c[0]),parent=txt(c[1]);if(!op||!parent)throw Error("Nro OP e OP-Pai são obrigatórios.");const qty=integer(c[8],"Qtd.Programada",1),si=integer(c[9],"Série Inicial"),sf=integer(c[10],"Série Final");if(sf-si+1!==qty)throw Error("Intervalo de séries não confere com Qtd.Programada.");
- const pot=Number(String(c[15]??0).replace(/\./g,"").replace(",", "."));if(!Number.isFinite(pot)||pot<0)throw Error("Potência PA inválida.");
+ const potRaw=txt(c[15]);const potMatch=potRaw.match(/^[+-]?\d+(?:[.,]\d+)?/);const pot=potRaw===""?0:potMatch?Number(potMatch[0].replace(",", ".")):NaN;if(!Number.isFinite(pot)||pot<0)throw Error("Potência PA inválida.");
  out.push({nro_op:op,op_pai:parent,cod_cli:txt(c[2]),nome_cliente:txt(c[3]),status_op:txt(c[4]),data_programada:date(c[5],!!wb.Workbook?.WBProps?.date1904),atividade:txt(c[6]),descr_atividade:txt(c[7])||"SOLDA TANQUE",qtd_programada:qty,serie_inicial:si,serie_final:sf,dia_semana:txt(c[11]),produto:txt(c[12]),descr_produto:txt(c[13]),referencia_prod:txt(c[14]),potencia_pa:pot,linha_prod:txt(c[16]),qtd_op:integer(c[17],"Qtd.OP"),qtd_op_pai:integer(c[18],"Qtd.OP-Pai"),qtd_apontada_erp:integer(c[19],"Qtd.Apontada")});}
  catch(e){throw Error("Linha "+(i+1)+": "+(e as Error).message);}}
  if(!out.length)throw Error("A planilha não contém linhas válidas de TANQUE.");
