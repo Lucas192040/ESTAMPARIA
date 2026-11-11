@@ -4,18 +4,18 @@ import { requireRole } from "@/lib/auth";
 import { answer, failure, guard, limitedBody, ApiError } from "@/lib/server";
 import { soldaDb } from "@/lib/solda-server";
 export const runtime="nodejs"; export const maxDuration=60;
-const norm=(v:unknown)=>String(v??"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+const norm=(v:unknown)=>String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const txt=(v:unknown)=>String(v??"").trim();
 function date(v:unknown,date1904=false):string {
  let y:number,m:number,d:number;
  if(typeof v==="number"){const p=XLSX.SSF.parse_date_code(v,{date1904});if(!p)throw Error("Data programada inválida.");({y,m,d}=p);}
- else {const s=txt(v);let a=s.match(/^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/);if(a){d=+a[1];m=+a[2];y=+a[3];}else{a=s.match(/^(\\d{4})-(\\d{2})-(\\d{2})/);if(!a)throw Error("Data inválida: "+s);y=+a[1];m=+a[2];d=+a[3];}}
+ else {const s=txt(v);let a=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(a){d=+a[1];m=+a[2];y=+a[3];}else{a=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(!a)throw Error("Data inválida: "+s);y=+a[1];m=+a[2];d=+a[3];}}
  const dt=new Date(Date.UTC(y,m-1,d));if(dt.getUTCFullYear()!==y||dt.getUTCMonth()!==m-1||dt.getUTCDate()!==d)throw Error("Data programada inválida.");
  return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
 }
-function integer(v:unknown,label:string,min=0){const s=txt(v).replace(/\\./g,"").replace(",",".");const n=Number(s);if(!Number.isSafeInteger(n)||n<min||n>2147483647)throw Error(label+" inválido.");return n;}
+function integer(v:unknown,label:string,min=0){const s=txt(v).replace(/\./g,"").replace(",",".");const n=Number(s);if(!Number.isSafeInteger(n)||n<min||n>2147483647)throw Error(label+" inválido.");return n;}
 function parse(buffer:Buffer,filename:string){
- if(!/\\.xlsx?$/i.test(filename)||buffer.length>4_000_000)throw Error("Selecione Excel .xls/.xlsx de até 4 MB.");
+ if(!/\.xlsx?$/i.test(filename)||buffer.length>4_000_000)throw Error("Selecione Excel .xls/.xlsx de até 4 MB.");
  const wb=XLSX.read(buffer,{type:"buffer",cellDates:false,sheetRows:10002});
  const required=["Nro OP","OP-Pai","Cód.Cli","Nome Cliente","Status OP","Dt.Programada","Atividade","Descr.Atividade","Qtd.Programada","Série Inicial","Série Final","Dia Semana","Produto","Descr.Produto","Referência Prod.","Potência PA","Linha Prod","Qtd.OP","Qtd.OP-Pai","Qtd.Apontada"];
  const matches:any[]=[];
@@ -24,7 +24,7 @@ function parse(buffer:Buffer,filename:string){
  const {rows,header,ix}=matches[0],out:any[]=[];let ignoradas=0;
  for(let i=header+1;i<rows.length;i++){const r=rows[i];if(r.every((v:any)=>v==null||txt(v)===""))continue;const c=ix.map((j:number)=>r[j]);const produto=txt(c[13]).toUpperCase();if(!produto.startsWith("TANQUE")){ignoradas++;continue;}
  try{const op=txt(c[0]),parent=txt(c[1]);if(!op||!parent)throw Error("Nro OP e OP-Pai são obrigatórios.");const qty=integer(c[8],"Qtd.Programada",1),si=integer(c[9],"Série Inicial"),sf=integer(c[10],"Série Final");if(sf-si+1!==qty)throw Error("Intervalo de séries não confere com Qtd.Programada.");
- const pot=Number(String(c[15]??0).replace(/\\./g,"").replace(",", "."));if(!Number.isFinite(pot)||pot<0)throw Error("Potência PA inválida.");
+ const pot=Number(String(c[15]??0).replace(/\./g,"").replace(",", "."));if(!Number.isFinite(pot)||pot<0)throw Error("Potência PA inválida.");
  out.push({nro_op:op,op_pai:parent,cod_cli:txt(c[2]),nome_cliente:txt(c[3]),status_op:txt(c[4]),data_programada:date(c[5],!!wb.Workbook?.WBProps?.date1904),atividade:txt(c[6]),descr_atividade:txt(c[7])||"SOLDA TANQUE",qtd_programada:qty,serie_inicial:si,serie_final:sf,dia_semana:txt(c[11]),produto:txt(c[12]),descr_produto:txt(c[13]),referencia_prod:txt(c[14]),potencia_pa:pot,linha_prod:txt(c[16]),qtd_op:integer(c[17],"Qtd.OP"),qtd_op_pai:integer(c[18],"Qtd.OP-Pai"),qtd_apontada_erp:integer(c[19],"Qtd.Apontada")});}
  catch(e){throw Error("Linha "+(i+1)+": "+(e as Error).message);}}
  if(!out.length)throw Error("A planilha não contém linhas válidas de TANQUE.");
