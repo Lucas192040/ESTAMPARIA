@@ -165,9 +165,6 @@ function SoldaMasterPanel({rows,today,selectedMonth}:{rows:SoldaRow[];today:stri
  const byDate=new Map<string,DailyProduction>();for(const r of monthRows){const d=byDate.get(r.data_programada)??{date:r.data_programada,planned:0,done:0,pending:0};d.planned+=r.qtd_programada;d.done+=Math.min(r.qtd_programada,r.tanque);d.pending+=Math.max(0,r.qtd_programada-r.tanque);byDate.set(r.data_programada,d);}
  return <><MasterSummary planned={planned} done={done} pending={pending} percent={percent} overduePieces={overdue} overdueCount={lateRows.length}/><section className="master-sector-cards"><MasterProductionCard name="TANQUE" planned={planned} done={done} overdue={overdue} color="cyan" icon="▤"/></section><MasterDailyHistory rows={[...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date))} activity={null} processName="Solda — TANQUE"/></>;
 }
-return <><MasterSummary planned={planned} done={done} pending={pending} percent={percent} overduePieces={overdue} overdueCount={lateRows.length}/><section className="master-sector-cards"><MasterProductionCard name="TANQUE" planned={planned} done={done} overdue={overdue} color="cyan" icon="▤"/></section><MasterDailyHistory rows={[...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date))} activity={null} processName="Solda — TANQUE"/></>;
-}
-
 function PinturaMasterPanel({rows,today,selectedMonth}:{rows:PinturaRow[];today:string;selectedMonth:string}){
  const monthRows=rows.filter(r=>r.data_programada.startsWith(selectedMonth));
  const planned=monthRows.reduce((s,r)=>s+Number(r.qtd_programada||0),0),done=monthRows.reduce((s,r)=>s+Math.min(Number(r.qtd_programada||0),Number(r.tanque||0)),0),pending=Math.max(0,planned-done),percent=planned?Math.min(100,Math.round(done/planned*100)):0;
