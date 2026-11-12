@@ -3,7 +3,7 @@ import { useState, type FormEvent } from "react";
 import { LockKeyhole, Factory, ArrowRight } from "lucide-react";
 import { fetchJson } from "@/lib/client";
 export default function LoginScreen() {
-  const [role, setRole] = useState<"estamparia" | "radiador" | "ferragem" | "solda" | "master">("estamparia");
+  const [role, setRole] = useState<"estamparia" | "radiador" | "ferragem" | "solda" | "pintura" | "master">("estamparia");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -29,6 +29,7 @@ export default function LoginScreen() {
         <label className={role === "radiador" ? "active" : ""}><input type="radio" name="role" value="radiador" checked={role === "radiador"} onChange={() => { setRole("radiador"); setPassword(""); setError(""); }} /> Radiador</label>
         <label className={role === "ferragem" ? "active" : ""}><input type="radio" name="role" value="ferragem" checked={role === "ferragem"} onChange={() => { setRole("ferragem"); setPassword(""); setError(""); }} /> Ferragem</label>
         <label className={role === "solda" ? "active" : ""}><input type="radio" name="role" value="solda" checked={role === "solda"} onChange={() => { setRole("solda"); setPassword(""); setError(""); }} /> Solda</label>
+        <label className={role === "pintura" ? "active" : ""}><input type="radio" name="role" value="pintura" checked={role === "pintura"} onChange={() => { setRole("pintura"); setPassword(""); setError(""); }} /> Pintura</label>
         <label className={role === "master" ? "active" : ""}><input type="radio" name="role" value="master" checked={role === "master"} onChange={() => { setRole("master"); setPassword(""); setError(""); }} /> MASTER — Visualização geral</label>
       </fieldset>
       <label className="login-password"><span><LockKeyhole size={15}/> Senha do setor</span>
@@ -36,7 +37,7 @@ export default function LoginScreen() {
       </label>
       {error && <div className="error-inline" role="alert">{error}</div>}
       <button type="submit" className="primary login-submit" disabled={busy || !password}>{busy ? "Verificando..." : role === "master" ? "Entrar no MASTER" : "Entrar no setor"}<ArrowRight size={18}/></button>
-      <small>{role === "master" ? "Acesso somente para visualizar Estamparia, Radiador, Ferragem e Solda." : "O apontamento será permitido exclusivamente no setor autenticado."}</small>
+      <small>{role === "master" ? "Acesso somente para visualizar Estamparia, Radiador, Ferragem, Solda e Pintura." : "O apontamento será permitido exclusivamente no setor autenticado."}</small>
     </form>
   </main>;
 }
