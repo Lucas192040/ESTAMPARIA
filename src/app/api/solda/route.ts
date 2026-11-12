@@ -49,4 +49,28 @@ for(const r of parsed.rows){
  }
  await client.query(`INSERT INTO public.solda_programacoes(nro_op,op_pai,cod_cli,nome_cliente,status_op,data_programada,atividade,descr_atividade,qtd_programada,serie_inicial,serie_final,dia_semana,produto,descr_produto,referencia_prod,potencia_pa,linha_prod,qtd_op,qtd_op_pai,qtd_apontada_erp,importacao_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)`,values);
 };await client.query("COMMIT");}catch(e){await client.query("ROLLBACK");throw e;}finally{client.release();}return answer({ok:true,linhas:parsed.rows.length,ignoradas:parsed.ignoradas,importacao:id});}catch(e){return failure(e);}}
-export async function PATCH(req:Request){try{await requireRole("solda");await guard(req,"write");const p=z.object({programacao_id:z.coerce.number().int().positive(),tanque:z.coerce.number().int().safe().min(0).max(2147483647)}).parse(JSON.parse((await limitedBody(req,2048)).toString("utf8")));const q=await soldaDb().query(`INSERT INTO public.solda_producao(programacao_id,tanque,atualizado_em) SELECT p.id,$2,now() FROM public.solda_programacoes p WHERE p.id=$1 AND $2<=p.qtd_programada ON CONFLICT(programacao_id) DO UPDATE SET tanque=EXCLUDED.tanque,atualizado_em=now() RETURNING *`,[p.programacao_id,p.tanque]);if(!q.rowCount)throw new ApiError("O apontamento não pode superar a quantidade programada.",422);await soldaDb().query("INSERT INTO public.solda_apontamentos_historico(programacao_id,tanque) VALUES($1,$2)",[p.programacao_id,p.tanque]);return answer({ok:true,production:q.rows[0]});}catch(e){return failure(e);}}
+export async function PATCH(req:Request){
+ try{
+  await requireRole("solda");
+  await guard(req,"write");
+  const raw=JSON.parse((await limitedBody(req,2048)).toString("utf8"));
+  const programacaoId=String(raw?.programacao_id??"").trim();
+  const tanque=typeof raw?.tanque==="number"?raw.tanque:Number(String(raw?.tanque??"").trim());
+  if(!programacaoId||programacaoId.length>100)throw new ApiError("Selecione uma programação válida.",422);
+  if(!Number.isSafeInteger(tanque)||tanque<0||tanque>2147483647)throw new ApiError("Informe uma quantidade inteira válida.",422);
+  const client=await soldaDb().connect();
+  try{
+   await client.query("BEGIN");
+   const q=await client.query(`INSERT INTO public.solda_producao(programacao_id,tanque,atualizado_em)
+    SELECT p.id,$2,now() FROM public.solda_programacoes p
+    WHERE p.id::text=$1 AND $2<=p.qtd_programada
+    ON CONFLICT(programacao_id) DO UPDATE SET tanque=EXCLUDED.tanque,atualizado_em=now()
+    RETURNING *`,[programacaoId,tanque]);
+   if(!q.rowCount)throw new ApiError("A programação não foi encontrada ou a quantidade supera o total programado.",422);
+   await client.query("INSERT INTO public.solda_apontamentos_historico(programacao_id,tanque) VALUES($1,$2)",[q.rows[0].programacao_id,tanque]);
+   await client.query("COMMIT");
+   return answer({ok:true,production:q.rows[0]});
+  }catch(e){await client.query("ROLLBACK");throw e;}
+  finally{client.release();}
+ }catch(e){return failure(e);}
+}
