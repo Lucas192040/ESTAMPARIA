@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createHash } from "node:crypto";
 import * as XLSX from "xlsx";
 import { requireRole } from "@/lib/auth";
 import { answer, failure, guard, limitedBody, ApiError } from "@/lib/server";
@@ -55,22 +56,58 @@ function parse(buffer:Buffer,filename:string){
  out.push({nro_op:op,op_pai:parent,cod_cli:txt(c[2]),nome_cliente:txt(c[3]),status_op:txt(c[4]),data_programada:excelDate(c[5],!!wb.Workbook?.WBProps?.date1904),atividade:txt(c[6]),descr_atividade:txt(c[7])||"FERRAGEM",qtd_programada:qty,serie_inicial:si,serie_final:sf,dia_semana:txt(c[11]),produto:txt(c[12]),descr_produto:txt(c[13]),referencia_prod:txt(c[14]),potencia_pa:potency,linha_prod:txt(c[16]),qtd_op:integer(c[17],"Qtd.OP"),qtd_op_pai:integer(c[18],"Qtd.OP-Pai"),qtd_apontada_erp:integer(c[19],"Qtd.Apontada")});
  }catch(e){throw Error("Linha "+(i+1)+": "+(e as Error).message);}}
  if(out.length>10000)throw Error("A planilha excede o limite de 10.000 programações.");if(!out.length)throw Error("A planilha não contém programações.");
- return {name,rows:out};
+ return {name,headerRow:header+1,rows:out};
 }
 export async function GET(req:Request){
  try{const role=await requireRole();if(role!=="ferragem"&&role!=="master")throw new ApiError("Acesso restrito à Ferragem.",403);await guard(req,"read");const q=await ferragemDb().query(`SELECT p.id,p.nro_op,p.op_pai,p.cod_cli,p.nome_cliente,p.status_op,p.data_programada,p.qtd_programada,p.serie_inicial,p.serie_final,p.produto,p.descr_produto,p.referencia_prod,p.potencia_pa,p.linha_prod,p.qtd_op,p.qtd_op_pai,p.qtd_apontada_erp,COALESCE(f.viga_superior,0) viga_superior,COALESCE(f.viga_inferior,0) viga_inferior,COALESCE(f.dobradeira_superior,0) dobradeira_superior,COALESCE(f.dobradeira_inferior,0) dobradeira_inferior FROM public.fer_programacoes p LEFT JOIN public.fer_producao f ON f.programacao_id=p.id ORDER BY p.data_programada,p.op_pai,p.nro_op`);
  return answer({rows:q.rows});}catch(e){return failure(e);}
 }
 export async function POST(req:Request){
- try{await requireRole("ferragem");await guard(req,"import");const body=await limitedBody(req,4_100_000);const form=await new Response(body,{headers:{"content-type":req.headers.get("content-type")||""}}).formData();const file=form.get("file");if(!(file instanceof File))throw new ApiError("Selecione a planilha de programação.");
- const parsed=parse(Buffer.from(await file.arrayBuffer()),file.name);const client=await ferragemDb().connect();let importId:number;
- try{await client.query("BEGIN");const imp=await client.query("INSERT INTO public.fer_importacoes(nome_arquivo,quantidade_linhas) VALUES($1,$2) RETURNING id",[file.name.slice(0,255),parsed.rows.length]);importId=imp.rows[0].id;
- for(const r of parsed.rows){await client.query(`INSERT INTO public.fer_programacoes(nro_op,op_pai,cod_cli,nome_cliente,status_op,data_programada,atividade,descr_atividade,qtd_programada,serie_inicial,serie_final,dia_semana,produto,descr_produto,referencia_prod,potencia_pa,linha_prod,qtd_op,qtd_op_pai,qtd_apontada_erp,importacao_id)
- VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
- ON CONFLICT(nro_op,data_programada,serie_inicial,serie_final) DO UPDATE SET op_pai=EXCLUDED.op_pai,cod_cli=EXCLUDED.cod_cli,nome_cliente=EXCLUDED.nome_cliente,status_op=EXCLUDED.status_op,atividade=EXCLUDED.atividade,descr_atividade=EXCLUDED.descr_atividade,qtd_programada=EXCLUDED.qtd_programada,dia_semana=EXCLUDED.dia_semana,produto=EXCLUDED.produto,descr_produto=EXCLUDED.descr_produto,referencia_prod=EXCLUDED.referencia_prod,potencia_pa=EXCLUDED.potencia_pa,linha_prod=EXCLUDED.linha_prod,qtd_op=EXCLUDED.qtd_op,qtd_op_pai=EXCLUDED.qtd_op_pai,qtd_apontada_erp=EXCLUDED.qtd_apontada_erp,importacao_id=EXCLUDED.importacao_id`,
- [r.nro_op,r.op_pai,r.cod_cli,r.nome_cliente,r.status_op,r.data_programada,r.atividade,r.descr_atividade,r.qtd_programada,r.serie_inicial,r.serie_final,r.dia_semana,r.produto,r.descr_produto,r.referencia_prod,r.potencia_pa,r.linha_prod,r.qtd_op,r.qtd_op_pai,r.qtd_apontada_erp,importId]);}
- await client.query("COMMIT");}catch(e){await client.query("ROLLBACK");throw e;}finally{client.release();}
- return answer({ok:true,linhas:parsed.rows.length,importacao:importId});}catch(e){return failure(e);}
+ try{
+  await requireRole("ferragem");
+  await guard(req,"import");
+  const body=await limitedBody(req,4_100_000);
+  const form=await new Response(body,{headers:{"content-type":req.headers.get("content-type")||""}}).formData();
+  const file=form.get("file");
+  if(!(file instanceof File))throw new ApiError("Selecione a planilha de programação.");
+  const buffer=Buffer.from(await file.arrayBuffer());
+  let parsed;
+  try{parsed=parse(buffer,file.name);}catch(e){throw new ApiError((e as Error).message,422);}
+  const hash=createHash("sha256").update(buffer).digest("hex");
+  const action=String(form.get("action")||"confirm");
+  if(action==="preview"){
+   const dates=parsed.rows.map(r=>r.data_programada).sort();
+   return answer({
+    hash,
+    rows:parsed.rows.length,
+    ops:new Set(parsed.rows.map(r=>r.op_pai)).size,
+    units:parsed.rows.reduce((sum,r)=>sum+r.qtd_programada,0),
+    start:dates[0],
+    end:dates[dates.length-1],
+    sheet:parsed.name,
+    headerRow:parsed.headerRow,
+    sample:parsed.rows.slice(0,5).map(r=>({op_pai:r.op_pai,nome_cliente:r.nome_cliente,data_programada:r.data_programada,qtd_programada:r.qtd_programada}))
+   });
+  }
+  if(action!=="confirm")throw new ApiError("Ação de importação inválida.");
+  if(form.get("hash")!==hash)throw new ApiError("O arquivo mudou. Selecione-o e gere uma nova prévia.",409);
+  const client=await ferragemDb().connect();
+  let importId:number;
+  try{
+   await client.query("BEGIN");
+   const imp=await client.query("INSERT INTO public.fer_importacoes(nome_arquivo,quantidade_linhas) VALUES($1,$2) RETURNING id",[file.name.slice(0,255),parsed.rows.length]);
+   importId=imp.rows[0].id;
+   for(const r of parsed.rows){
+    await client.query(`INSERT INTO public.fer_programacoes(nro_op,op_pai,cod_cli,nome_cliente,status_op,data_programada,atividade,descr_atividade,qtd_programada,serie_inicial,serie_final,dia_semana,produto,descr_produto,referencia_prod,potencia_pa,linha_prod,qtd_op,qtd_op_pai,qtd_apontada_erp,importacao_id)
+     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
+     ON CONFLICT(nro_op,data_programada,serie_inicial,serie_final) DO UPDATE SET op_pai=EXCLUDED.op_pai,cod_cli=EXCLUDED.cod_cli,nome_cliente=EXCLUDED.nome_cliente,status_op=EXCLUDED.status_op,atividade=EXCLUDED.atividade,descr_atividade=EXCLUDED.descr_atividade,qtd_programada=EXCLUDED.qtd_programada,dia_semana=EXCLUDED.dia_semana,produto=EXCLUDED.produto,descr_produto=EXCLUDED.descr_produto,referencia_prod=EXCLUDED.referencia_prod,potencia_pa=EXCLUDED.potencia_pa,linha_prod=EXCLUDED.linha_prod,qtd_op=EXCLUDED.qtd_op,qtd_op_pai=EXCLUDED.qtd_op_pai,qtd_apontada_erp=EXCLUDED.qtd_apontada_erp,importacao_id=EXCLUDED.importacao_id`,
+     [r.nro_op,r.op_pai,r.cod_cli,r.nome_cliente,r.status_op,r.data_programada,r.atividade,r.descr_atividade,r.qtd_programada,r.serie_inicial,r.serie_final,r.dia_semana,r.produto,r.descr_produto,r.referencia_prod,r.potencia_pa,r.linha_prod,r.qtd_op,r.qtd_op_pai,r.qtd_apontada_erp,importId]);
+   }
+   await client.query("COMMIT");
+  }catch(e){await client.query("ROLLBACK");throw e;}
+  finally{client.release();}
+  return answer({ok:true,linhas:parsed.rows.length,importacao:importId});
+ }catch(e){return failure(e);}
 }
 export async function PATCH(req:Request){
  try{
