@@ -3,8 +3,8 @@ import PwaRegistration from "@/components/PwaRegistration";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ITAM | Estamparia e Radiador",
-  description: "Programação e acompanhamento de produção da Estamparia e Radiador.",
+  title: "ITAM | Controle de Produção",
+  description: "Programação e acompanhamento dos setores de produção.",
   applicationName: "ITAM Produção",
   appleWebApp: { capable: true, title: "Estamparia", statusBarStyle: "black-translucent" },
   icons: {
