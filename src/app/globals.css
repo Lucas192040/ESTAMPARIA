@@ -2698,3 +2698,25 @@ tr:last-child td {
   .login-sectors .sector-tile { transition: none; }
   .login-sectors .sector-tile:hover { transform: none; }
 }
+/* Refinamento visual da tela inicial ITAM — sem imagens */
+.login-shell{min-height:100svh;padding:28px 18px;background:radial-gradient(ellipse at 50% 0%,#173c5b 0%,#0c1d2c 42%,#070e16 100%)}
+.login-panel{width:min(100%,760px);max-width:760px;padding:32px 38px;gap:17px;border:1px solid #29475e;border-radius:20px;background:linear-gradient(155deg,rgba(19,39,56,.98),rgba(11,24,36,.98));box-shadow:0 24px 70px #0008,inset 0 1px 0 #ffffff0d}
+.login-logo{max-width:150px;justify-self:center;margin:0 auto 2px}
+.login-heading{justify-content:center;gap:11px}.login-heading>svg{color:#56c9e7}
+.login-heading h1{font-size:clamp(23px,3vw,29px);font-weight:800;letter-spacing:-.5px}
+.login-panel>p{text-align:center;max-width:520px;justify-self:center;font-size:13px}
+.login-sectors{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.login-sectors legend{margin-bottom:2px;font-size:12px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#a9c2d5}
+.login-sectors label{min-height:58px;padding:12px 13px;border:1px solid #35536a;border-radius:11px;background:linear-gradient(145deg,#172f43,#112537);color:#dceaf4;font-size:13px;font-weight:750;transition:background .18s,border-color .18s,transform .18s,box-shadow .18s}
+.login-sectors label:hover{border-color:#5c91b0;background:#1a3a51;transform:translateY(-1px)}
+.login-sectors label.active{border-color:#36cbb9;background:linear-gradient(135deg,#174a49,#153b43);color:#fff;box-shadow:0 0 0 1px #36cbb933,0 5px 16px #0003}
+.login-sectors input{width:15px;height:15px;flex:0 0 15px;accent-color:#42d5c5}
+.login-sectors label:last-child{grid-column:1/-1;min-height:50px;background:linear-gradient(100deg,#183d3b,#142e3b);border-color:#347d70}
+.login-sectors label:last-child.active{border-color:#69e2a4;background:linear-gradient(100deg,#1b5145,#173b43)}
+.login-password{gap:8px;font-size:12px;font-weight:700}
+.login-password input{min-height:46px;padding:0 14px;border:1px solid #38556b;border-radius:10px;background:#081724;color:#f4f8fb;outline:none}
+.login-password input:focus{border-color:#3ecdbb;box-shadow:0 0 0 3px #3ecdbb22}
+.login-submit{min-height:48px;border-radius:10px;font-weight:800;letter-spacing:.2px;box-shadow:0 7px 18px #087dff26}
+.login-panel>small{text-align:center;font-size:11px}
+@media(max-width:650px){.login-shell{padding:14px 10px;align-items:center}.login-panel{max-width:480px;padding:24px 18px;gap:14px;border-radius:16px}.login-logo{max-width:132px}.login-heading h1{font-size:22px}.login-panel>p{font-size:12px}.login-sectors{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.login-sectors label{min-height:52px;padding:10px 8px;font-size:12px}.login-sectors label:last-child{grid-column:1/-1}}
+@media(prefers-reduced-motion:reduce){.login-sectors label{transition:none}}
