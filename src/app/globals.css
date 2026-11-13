@@ -2636,3 +2636,65 @@ tr:last-child td {
  .master-radiador-cards .master-sector-values{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:9px}
  .master-radiador-cards .master-sector-values>div:nth-child(3){border-left:0;padding-left:0}
 }
+
+
+/* Acesso ITAM — cartões fotográficos dos setores (escopo restrito à tela de login) */
+.login-panel { max-width: 1040px; padding: 30px; gap: 15px; }
+.login-logo { max-width: 170px; }
+.login-sectors { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+.login-sectors legend { margin-bottom: 2px; }
+.login-sectors .sector-tile {
+  position: relative; isolation: isolate; overflow: hidden;
+  min-height: 166px; padding: 0; border: 1px solid var(--tile-accent, #2c91ff);
+  border-radius: 14px; display: flex; align-items: stretch; cursor: pointer;
+  background-color: #101d2b; background-size: cover; background-position: center;
+  box-shadow: 0 8px 24px #0005; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.login-sectors .sector-tile::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(90deg, rgba(4,13,24,.12) 0%, rgba(4,13,24,.42) 34%, rgba(4,13,24,.94) 62%, rgba(4,13,24,.97) 100%);
+}
+.login-sectors .sector-tile::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(135deg, transparent 48%, color-mix(in srgb, var(--tile-accent) 22%, transparent));
+}
+.login-sectors .sector-tile:hover { transform: translateY(-3px); box-shadow: 0 12px 30px #0008, 0 0 18px color-mix(in srgb, var(--tile-accent) 32%, transparent); }
+.login-sectors .sector-tile.active {
+  border-color: var(--tile-accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--tile-accent) 36%, transparent), 0 10px 30px #0008, 0 0 22px color-mix(in srgb, var(--tile-accent) 35%, transparent);
+}
+.login-sectors .sector-tile input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.sector-tile-content {
+  width: 100%; min-width: 0; padding: 18px 20px 16px 42%;
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 7px;
+}
+.sector-tile-icon { color: var(--tile-accent); filter: drop-shadow(0 0 8px color-mix(in srgb, var(--tile-accent) 55%, transparent)); }
+.sector-tile-content strong { color: #fff; font-size: clamp(16px, 2vw, 22px); font-weight: 850; letter-spacing: .35px; line-height: 1.05; text-shadow: 0 2px 8px #000; }
+.sector-tile-content small { color: #d5e2ee; font-size: 11px; line-height: 1.35; text-shadow: 0 1px 5px #000; }
+.sector-tile-action { margin-top: 5px; display: inline-flex; align-items: center; gap: 8px; color: var(--tile-accent); font-size: 10px; font-weight: 850; letter-spacing: .6px; }
+.sector-tile.estamparia { --tile-accent: #28a5ff; }
+.sector-tile.radiador { --tile-accent: #2de0b3; }
+.sector-tile.ferragem { --tile-accent: #ffad35; }
+.sector-tile.solda { --tile-accent: #bd7bff; }
+.sector-tile.pintura { --tile-accent: #39e4d4; grid-column: 1 / -1; min-height: 142px; background-position: center 43%; }
+.sector-tile.pintura .sector-tile-content { padding-left: 48%; }
+.login-sectors .sector-tile.master {
+  --tile-accent: #70e69c; grid-column: 1 / -1; min-height: 86px;
+  background: linear-gradient(115deg, #103b35, #0c202b 68%, #102f37);
+}
+.login-sectors .sector-tile.master::before { background: radial-gradient(circle at 15% 50%, #1d8c6b55, transparent 35%); }
+.login-sectors .sector-tile.master .sector-tile-content { padding: 13px 20px; flex-direction: row; align-items: center; gap: 15px; }
+.login-sectors .sector-tile.master .sector-tile-content small { margin-left: auto; max-width: 300px; text-align: right; }
+.login-password { margin-top: 2px; }
+@media(max-width: 720px) {
+  .login-shell { padding: 12px; align-items: flex-start; }
+  .login-panel { max-width: 100%; padding: 20px 15px; margin: 8px 0; }
+  .login-sectors { grid-template-columns: 1fr; }
+  .login-sectors .sector-tile, .login-sectors .sector-tile.pintura, .login-sectors .sector-tile.master { grid-column: 1; min-height: 138px; }
+  .sector-tile-content, .sector-tile.pintura .sector-tile-content { padding-left: 40%; padding-right: 13px; }
+  .login-sectors .sector-tile.master .sector-tile-content { flex-wrap: wrap; gap: 8px; }
+  .login-sectors .sector-tile.master .sector-tile-content small { margin-left: 0; text-align: left; max-width: none; }
+}
+@media(prefers-reduced-motion: reduce) {
+  .login-sectors .sector-tile { transition: none; }
+  .login-sectors .sector-tile:hover { transform: none; }
+}
