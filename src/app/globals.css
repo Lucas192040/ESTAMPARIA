@@ -2720,3 +2720,61 @@ tr:last-child td {
 .login-panel>small{text-align:center;font-size:11px}
 @media(max-width:650px){.login-shell{padding:14px 10px;align-items:center}.login-panel{max-width:480px;padding:24px 18px;gap:14px;border-radius:16px}.login-logo{max-width:132px}.login-heading h1{font-size:22px}.login-panel>p{font-size:12px}.login-sectors{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.login-sectors label{min-height:52px;padding:10px 8px;font-size:12px}.login-sectors label:last-child{grid-column:1/-1}}
 @media(prefers-reduced-motion:reduce){.login-sectors label{transition:none}}
+
+
+/* Login ITAM — painel compacto centralizado; o fundo permanece em tela cheia */
+.login-shell{
+  min-height:100svh;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:radial-gradient(ellipse at 50% 8%,#17364e 0%,#0b1c2a 48%,#07111b 100%);
+}
+.login-panel{
+  width:min(100%,490px);
+  max-width:490px;
+  padding:20px 22px;
+  gap:11px;
+  border:1px solid #29475e;
+  border-radius:15px;
+  background:linear-gradient(155deg,rgba(19,39,56,.98),rgba(11,24,36,.99));
+  box-shadow:0 18px 48px #0008,inset 0 1px 0 #ffffff0d;
+}
+.login-logo{width:100%;max-width:88px;height:auto;margin:0 auto 0}
+.login-heading{justify-content:center;gap:9px}
+.login-heading>svg{width:16px;height:16px;color:#56c9e7}
+.login-heading h1{font-size:18px;font-weight:800;letter-spacing:-.25px}
+.login-panel>p{font-size:9px;text-align:center;line-height:1.45}
+.login-sectors{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.login-sectors legend{font-size:9px;margin-bottom:0;letter-spacing:.5px}
+.login-sectors label{
+  min-width:0;
+  min-height:45px;
+  padding:8px 7px;
+  gap:6px;
+  border:1px solid #35536a;
+  border-radius:8px;
+  background:linear-gradient(145deg,#172f43,#112537);
+  color:#e4eff7;
+  font-size:9px;
+  font-weight:750;
+}
+.login-sectors label:hover{border-color:#5c91b0;background:#1a3a51}
+.login-sectors label.active{border-color:#36cbb9;background:linear-gradient(135deg,#174a49,#153b43);box-shadow:0 0 0 1px #36cbb933}
+.login-sectors input{width:10px;height:10px;min-height:10px;flex:0 0 10px;margin:0;padding:0;accent-color:#42d5c5}
+.login-sectors label:last-child{grid-column:1/-1;min-height:42px}
+.login-password{gap:6px;font-size:9px}
+.login-password>span{gap:6px}
+.login-password>span svg{width:11px;height:11px}
+.login-password input{min-height:34px;padding:0 10px;border-radius:7px;font-size:9px}
+.login-submit{min-height:36px;border-radius:7px;font-size:10px}
+.login-panel>small{font-size:8px;line-height:1.4;text-align:center}
+@media(max-width:560px){
+  .login-shell{padding:14px}
+  .login-panel{width:min(100%,490px);max-width:490px;padding:18px 15px;gap:10px}
+  .login-sectors{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .login-sectors label{min-height:43px;font-size:9px}
+  .login-sectors label:last-child{grid-column:1/-1}
+}
