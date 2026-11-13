@@ -1,6 +1,6 @@
 "use client";
 import { useState, type FormEvent } from "react";
-import { LockKeyhole, Factory, ArrowRight, Gauge, Wrench, Flame, Paintbrush, ShieldCheck } from "lucide-react";
+import { LockKeyhole, Factory, ArrowRight, Gauge, Wrench, Flame, Paintbrush, ShieldCheck, Activity } from "lucide-react";
 import { fetchJson } from "@/lib/client";
 
 type AccessRole = "estamparia" | "radiador" | "ferragem" | "solda" | "pintura" | "master";
@@ -16,7 +16,7 @@ const sectorCards: Array<{
   {
     role: "estamparia",
     title: "ESTAMPARIA",
-    description: "Corte a laser • Máquina CALFRAN",
+    description: "Corte a Laser CALFRAN",
     className: "estamparia",
     image: "https://braffemam.com.br/wp-content/webp-express/webp-images/uploads/2025/01/Maquina-de-corte-a-laser.png.webp",
     Icon: Factory,
@@ -24,7 +24,7 @@ const sectorCards: Array<{
   {
     role: "radiador",
     title: "RADIADOR",
-    description: "Radiadores de transformadores",
+    description: "Radiador de Transformador",
     className: "radiador",
     image: "https://image.made-in-china.com/2f0j00WlTqkFcDbRgy/Customized-Gilled-Transformer-Radiator-for-Oil-Immersed-Power-Transformer.jpg",
     Icon: Gauge,
@@ -32,15 +32,15 @@ const sectorCards: Array<{
   {
     role: "ferragem",
     title: "FERRAGEM",
-    description: "Corte plasma • UNIPLASMA",
+    description: "Corte Plasma UNIPLASMA",
     className: "ferragem",
-    image: "https://cdn.prod.website-files.com/5f85d2a8170cc25cfcd113d6/5fd79c8ff6de3b742ccbc6a7_laser%20%281%29.svg",
+    image: "https://www.hypertherm.com/globalassets/images/industries/metal-fabrication/plasma-cutting.jpg",
     Icon: Wrench,
   },
   {
     role: "solda",
     title: "SOLDA TANQUE",
-    description: "Soldagem de tanques",
+    description: "Soldagem de Tanques",
     className: "solda",
     image: "https://www.mitm.com/images/2022/tank-welding.webp",
     Icon: Flame,
@@ -48,7 +48,7 @@ const sectorCards: Array<{
   {
     role: "pintura",
     title: "PINTURA",
-    description: "Pintura de transformadores • ITAM TOP",
+    description: "Transformador ITAM TOP",
     className: "pintura",
     image: "https://genbatrafo.com.tr/wp-content/uploads/2025/02/Trafo-Kazani-Boya-Yenilemesi-scaled.jpg",
     Icon: Paintbrush,
@@ -86,18 +86,26 @@ export default function LoginScreen() {
   }
 
   return (
-    <main className="login-shell">
-      <form className="login-panel" onSubmit={login}>
-        <img src="/logo-itam-compact.webp" alt="ITAM Transformadores" width={180} height={81} className="login-logo" />
-        <div className="login-heading"><Factory size={22} /><h1>Controle de Produção</h1></div>
-        <p>Selecione o setor para acessar os apontamentos e acompanhar a produção.</p>
-        <fieldset className="login-sectors">
-          <legend>Selecione o processo</legend>
+    <main className="access-shell">
+      <header className="access-hero">
+        <div className="access-brand">
+          <img src="/logo-itam-compact.webp" alt="ITAM Gestão Industrial" />
+        </div>
+        <div className="access-heading">
+          <h1>Central de Acessos</h1>
+          <p>Selecione o processo que deseja acompanhar</p>
+        </div>
+        <div className="access-online"><Activity size={18} /><span>SISTEMA ONLINE</span></div>
+      </header>
+
+      <form className="access-content" onSubmit={login}>
+        <fieldset className="access-grid">
+          <legend className="sr-only">Selecione o processo</legend>
           {sectorCards.map(({ role: cardRole, title, description, className, image, Icon }) => (
             <label
               key={cardRole}
-              className={`sector-tile ${className} ${role === cardRole ? "active" : ""}`}
-              style={image ? { backgroundImage: `linear-gradient(90deg, rgba(4,13,24,.08), rgba(4,13,24,.35) 35%, rgba(4,13,24,.96) 72%), url("${image}")` } : undefined}
+              className={`access-card ${className} ${role === cardRole ? "active" : ""} ${cardRole === "pintura" ? "wide" : ""}`}
+              style={image ? { backgroundImage: `linear-gradient(90deg, rgba(3,10,22,.04) 0%, rgba(3,10,22,.22) 38%, rgba(3,10,22,.94) 70%), url("${image}")` } : undefined}
             >
               <input
                 type="radio"
@@ -106,49 +114,52 @@ export default function LoginScreen() {
                 checked={role === cardRole}
                 onChange={() => chooseRole(cardRole)}
               />
-              <span className="sector-tile-content">
-                <Icon className="sector-tile-icon" size={30} strokeWidth={1.9} />
+              <span className="access-card-content">
+                <Icon className="access-card-icon" size={48} strokeWidth={1.7} />
                 <strong>{title}</strong>
                 <small>{description}</small>
-                <span className="sector-tile-action">ACESSAR SETOR <ArrowRight size={15} /></span>
+                <span className="access-card-action">ACESSAR SETOR <ArrowRight size={22} /></span>
               </span>
             </label>
           ))}
-          <label className={`sector-tile master ${role === "master" ? "active" : ""}`}>
-            <input
-              type="radio"
-              name="role"
-              value="master"
-              checked={role === "master"}
-              onChange={() => chooseRole("master")}
-            />
-            <span className="sector-tile-content">
-              <ShieldCheck className="sector-tile-icon" size={30} strokeWidth={1.9} />
-              <strong>PAINEL MASTER</strong>
-              <small>Visão geral de todos os setores • Acesso restrito à coordenação</small>
-              <span className="sector-tile-action">ACESSAR MASTER <ArrowRight size={15} /></span>
-            </span>
-          </label>
         </fieldset>
-        <label className="login-password">
-          <span><LockKeyhole size={15} /> Senha do setor</span>
-          <input
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            maxLength={256}
-            required
-            placeholder="Digite a senha"
-          />
-        </label>
-        {error && <div className="error-inline" role="alert">{error}</div>}
-        <button type="submit" className="primary login-submit" disabled={busy || !password}>
-          {busy ? "Verificando..." : role === "master" ? "Entrar no MASTER" : "Entrar no setor"}
-          <ArrowRight size={18} />
+
+        <section className="access-auth">
+          <div className="access-auth-title">
+            <LockKeyhole size={18} />
+            <span>ACESSO SEGURO</span>
+            <i />
+            <small>{role === "master" ? "Painel de coordenação" : `Setor selecionado: ${sectorCards.find((item) => item.role === role)?.title}`}</small>
+          </div>
+          <div className="access-auth-row">
+            <label className="login-password">
+              <span>Senha do setor</span>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                maxLength={256}
+                required
+                placeholder="Digite a senha para continuar"
+              />
+            </label>
+            <button type="submit" className="access-submit" disabled={busy || !password}>
+              {busy ? "VERIFICANDO..." : role === "master" ? "ENTRAR NO MASTER" : "ENTRAR NO SETOR"}
+              <ArrowRight size={19} />
+            </button>
+          </div>
+          {error && <div className="error-inline" role="alert">{error}</div>}
+        </section>
+
+        <button type="button" className={`access-master-link ${role === "master" ? "selected" : ""}`} onClick={() => chooseRole("master")}>
+          <ShieldCheck size={17} /> Acesso MASTER <span>Visão geral dos processos</span>
         </button>
-        <small>{role === "master" ? "Acesso somente para visualizar os setores de produção." : "O apontamento será permitido exclusivamente no setor autenticado."}</small>
       </form>
+
+      <footer className="access-footer">
+        <span>ITAM</span><i /> CONTROLE E ACOMPANHAMENTO INDUSTRIAL
+      </footer>
     </main>
   );
 }
